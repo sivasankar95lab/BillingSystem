@@ -941,7 +941,9 @@
 
         .company-logo-print {
             max-height: 80px;
+            max-width: 200px;
             margin-bottom: 10px;
+            object-fit: contain;
         }
 
         .invoice-title-print {
@@ -2792,7 +2794,11 @@
                 <div class="printable-invoice active">
                     <div class="invoice-header-print">
                         <div class="company-info-print">
-                            <img src="asset/logo.svg" alt="Company Logo" class="company-logo-print">
+                            ${companyDetails.logo ? `
+                                <img src="${companyDetails.logo}" alt="${companyDetails.name || 'Company Logo'}" class="company-logo-print">
+                            ` : `
+                                <img src="asset/logo.svg" alt="Company Logo" class="company-logo-print">
+                            `}
                             <h2>${companyDetails.name || invoiceData.companyName || 'Your Company Name'}</h2>
                             <p>${companyDetails.address || 'Address line 1'}</p>
                             <p>${companyDetails.city ? `${companyDetails.city}, ${companyDetails.state} - ${companyDetails.pincode}` : 'Address line 2'}</p>

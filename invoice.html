@@ -2546,10 +2546,6 @@
             
             // Add invoice cards
             invoices.forEach(invoice => {
-                // Find customer and company details
-                const customer = allInvoices.find(c => c.id === invoice.customerId) || {};
-                const company = allInvoices.find(c => c.id === invoice.companyId) || {};
-                
                 // Calculate total amount
                 let totalAmount = 0;
                 if (invoice.items && invoice.items.length > 0) {

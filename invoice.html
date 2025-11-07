@@ -1034,6 +1034,14 @@
             text-align: right;
         }
 
+        .signature-image-print {
+            max-height: 80px;
+            max-width: 200px;
+            margin-top: 10px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
+        }
+
         /* Footer Styles */
         footer {
             background-color: var(--dark-green);
@@ -1503,6 +1511,8 @@
         let selectedQuotation = null;
         let currentInvoiceData = null;
         let allInvoices = [];
+        let allCustomers = [];
+        let allCompanies = [];
 
         /**
          * Toggle sidebar collapse/expand
@@ -2060,6 +2070,10 @@
                 
                 const data = await response.json();
                 const record = data.record;
+                
+                // Store customers and companies globally for PDF generation
+                allCustomers = record.customers || [];
+                allCompanies = record.companies || [];
                 
                 // Clear dropdowns
                 customerSelect.innerHTML = '<option value="">Select a customer</option>';
@@ -2718,6 +2732,24 @@
         }
 
         /**
+         * Get customer details by ID
+         * @param {string} customerId - Customer ID
+         * @returns {Object} - Customer details
+         */
+        function getCustomerDetails(customerId) {
+            return allCustomers.find(customer => customer.id === customerId) || {};
+        }
+
+        /**
+         * Get company details by ID
+         * @param {string} companyId - Company ID
+         * @returns {Object} - Company details
+         */
+        function getCompanyDetails(companyId) {
+            return allCompanies.find(company => company.id === companyId) || {};
+        }
+
+        /**
          * Generate printable invoice HTML
          * @param {Object} invoiceData - Invoice data
          * @returns {string} - HTML string for printable invoice
@@ -2729,6 +2761,10 @@
                 const date = new Date(dateString);
                 return date.toLocaleDateString('en-IN');
             };
+            
+            // Get customer and company details
+            const customerDetails = getCustomerDetails(invoiceData.customerId);
+            const companyDetails = getCompanyDetails(invoiceData.companyId);
             
             // Generate items table rows
             let itemsHTML = '';
@@ -2757,10 +2793,10 @@
                     <div class="invoice-header-print">
                         <div class="company-info-print">
                             <img src="asset/logo.svg" alt="Company Logo" class="company-logo-print">
-                            <h2>${invoiceData.companyName || 'Your Company Name'}</h2>
-                            <p>Address line 1</p>
-                            <p>Address line 2</p>
-                            <p>GSTIN: ${getCompanyGSTIN(invoiceData.companyId)}</p>
+                            <h2>${companyDetails.name || invoiceData.companyName || 'Your Company Name'}</h2>
+                            <p>${companyDetails.address || 'Address line 1'}</p>
+                            <p>${companyDetails.city ? `${companyDetails.city}, ${companyDetails.state} - ${companyDetails.pincode}` : 'Address line 2'}</p>
+                            <p>GSTIN: ${companyDetails.gstin || 'Not provided'}</p>
                         </div>
                         <div class="invoice-title-print">
                             <h1>TAX INVOICE</h1>
@@ -2772,10 +2808,10 @@
                         <div class="from-to-print">
                             <div class="to-print">
                                 <div class="section-title-printa">Bill To:</div>
-                                <p><strong>${invoiceData.customerName || 'Customer Name'}</strong></p>
-                                <p>Address line 1</p>
-                                <p>Address line 2</p>
-                                <p>GSTIN: ${getCustomerGSTIN(invoiceData.customerId)}</p>
+                                <p><strong>${customerDetails.name || invoiceData.customerName || 'Customer Name'}</strong></p>
+                                <p>${customerDetails.address || 'Address line 1'}</p>
+                                <p>${customerDetails.city ? `${customerDetails.city}, ${customerDetails.state} - ${customerDetails.pincode}` : 'Address line 2'}</p>
+                                <p>GSTIN: ${customerDetails.gstin || 'Not provided'}</p>
                             </div>
                         </div>
                         <div class="invoice-meta-print">
@@ -2835,32 +2871,16 @@
                     </div>
                     
                     <div class="signature-print">
-                        <p>For ${invoiceData.companyName || 'Your Company Name'}</p>
-                        <br><br>
+                        <p>For ${companyDetails.name || invoiceData.companyName || 'Your Company Name'}</p>
+                        ${companyDetails.signature ? `
+                            <img src="${companyDetails.signature}" alt="Authorized Signature" class="signature-image-print">
+                        ` : `
+                            <div style="margin-top: 60px; border-bottom: 1px solid #000; width: 200px; display: inline-block;"></div>
+                        `}
                         <p>Authorized Signatory</p>
                     </div>
                 </div>
             `;
-        }
-
-        /**
-         * Get company GSTIN from database (placeholder)
-         * @param {string} companyId - Company ID
-         * @returns {string} - GSTIN number
-         */
-        function getCompanyGSTIN(companyId) {
-            // In a real implementation, this would fetch from the database
-            return '07AABCU9603R1ZM';
-        }
-
-        /**
-         * Get customer GSTIN from database (placeholder)
-         * @param {string} customerId - Customer ID
-         * @returns {string} - GSTIN number
-         */
-        function getCustomerGSTIN(customerId) {
-            // In a real implementation, this would fetch from the database
-            return '29AABCU9603R1Z2';
         }
 
         /**

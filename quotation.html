@@ -507,7 +507,7 @@
             color: var(--white);
         }
 
-        /* Modal Styles */
+        /* Modal Styles - Made Resizable */
         .modal {
             display: none;
             position: fixed;
@@ -529,10 +529,15 @@
             background-color: var(--white);
             border-radius: 10px;
             width: 90%;
-            max-width: 900px;
+            max-width: 95vw;
             max-height: 90vh;
-            overflow-y: auto;
+            min-width: 600px;
+            min-height: 500px;
+            overflow: auto;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            /* Make modal resizable */
+            resize: both;
+            overflow: auto;
         }
 
         .modal-header {
@@ -541,6 +546,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            cursor: move;
+            background-color: var(--light-green);
+            border-radius: 10px 10px 0 0;
         }
 
         .modal-title {
@@ -563,6 +571,8 @@
 
         .modal-body {
             padding: 20px;
+            height: calc(100% - 80px);
+            overflow-y: auto;
         }
 
         /* Form Styles */
@@ -919,6 +929,14 @@
             
             .discount-type-container {
                 flex-direction: column;
+            }
+            
+            /* Disable resizing on mobile */
+            .modal-content {
+                resize: none;
+                width: 95%;
+                min-width: unset;
+                min-height: unset;
             }
         }
 
@@ -2336,40 +2354,528 @@
         /**
          * Generate minimalist printable quotation HTML following Indian financial standards
          */
-        function generatePrintableQuotation() {
+        async function generatePrintableQuotation() {
+            try {
+                // Get selected customer and company IDs
+                const selectedCustomerId = document.getElementById('customer-select').value;
+                const selectedCompanyId = document.getElementById('company-select').value;
+                
+                let companyDetails = {};
+                let customerDetails = {};
+                
+                // Fetch current data to get company and customer details
+                const response = await fetch(API_URL + '/latest', {
+                    method: 'GET',
+                    headers: {
+                        'X-Master-Key': API_KEY
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const record = data.record;
+                    
+                    // Find company details
+                    if (record.companies && record.companies.length > 0) {
+                        const company = record.companies.find(c => c.id === selectedCompanyId);
+                        if (company) {
+                            companyDetails = {
+                                name: company.name || 'Company Name',
+                                address: company.address || '',
+                                city: company.city || '',
+                                state: company.state || '',
+                                pincode: company.pincode || '',
+                                phone: company.phone || '',
+                                email: company.email || '',
+                                gstin: company.gstin || '',
+                                pan: company.pan || ''
+                            };
+                        }
+                    }
+                    
+                    // Find customer details - FIXED: Properly fetch customer phone
+                    if (record.customers && record.customers.length > 0) {
+                        const customer = record.customers.find(c => c.id === selectedCustomerId);
+                        if (customer) {
+                            customerDetails = {
+                                name: customer.name || 'Customer Name',
+                                address: customer.address || '',
+                                city: customer.city || '',
+                                state: customer.state || '',
+                                pincode: customer.pincode || '',
+                                phone: customer.phone || '', // FIXED: This was missing
+                                email: customer.email || '',
+                                gstin: customer.gstin || ''
+                            };
+                        }
+                    }
+                }
+                
+                // Compose full addresses
+                const companyFullAddress = [
+                    companyDetails.address,
+                    companyDetails.city,
+                    companyDetails.state,
+                    companyDetails.pincode
+                ].filter(Boolean).join(', ');
+                
+                const customerFullAddress = [
+                    customerDetails.address,
+                    customerDetails.city,
+                    customerDetails.state,
+                    customerDetails.pincode
+                ].filter(Boolean).join(', ');
+
+                // Get items data
+                const items = [];
+                const rows = itemsTableBody.querySelectorAll('tr');
+                rows.forEach(row => {
+                    const discountType = row.querySelector('.discount-type-select').value;
+                    const discountValue = parseFloat(row.querySelector('.discount-value-input').value) || 0;
+                    
+                    const item = {
+                        description: row.querySelector('.item-description').value.trim(),
+                        hsn: row.querySelector('.item-hsn').value.trim(),
+                        quantity: parseFloat(row.querySelector('.item-quantity').value) || 0,
+                        rate: parseFloat(row.querySelector('.item-rate').value) || 0,
+                        discountType: discountType,
+                        discountValue: discountValue,
+                        gst: parseFloat(row.querySelector('.item-gst').value) || 0
+                    };
+                    items.push(item);
+                });
+                
+                let itemsHTML = '';
+                let itemCounter = 1;
+                let taxableValue = 0;
+                let totalGst = 0;
+                
+                items.forEach(item => {
+                    const baseAmount = item.quantity * item.rate;
+                    let discountAmount = 0;
+                    
+                    if (item.discountType === 'percentage') {
+                        discountAmount = baseAmount * (item.discountValue / 100);
+                    } else {
+                        discountAmount = item.discountValue;
+                    }
+                    
+                    const amountAfterDiscount = baseAmount - discountAmount;
+                    const gstAmount = amountAfterDiscount * (item.gst / 100);
+                    const cgstAmount = gstAmount / 2;
+                    const sgstAmount = gstAmount / 2;
+                    const totalAmount = amountAfterDiscount + gstAmount;
+                    
+                    taxableValue += amountAfterDiscount;
+                    totalGst += gstAmount;
+                    
+                    itemsHTML += `
+                        <tr>
+                            <td style="text-align: center;">${itemCounter++}</td>
+                            <td>${item.description}</td>
+                            <td style="text-align: center;">${item.hsn}</td>
+                            <td style="text-align: center;">${item.quantity}</td>
+                            <td style="text-align: right;">₹${item.rate.toFixed(2)}</td>
+                            <td style="text-align: center;">${item.discountType === 'percentage' ? item.discountValue + '%' : '₹' + item.discountValue.toFixed(2)}</td>
+                            <td style="text-align: center;">${item.gst}%</td>
+                            <td style="text-align: right;">₹${totalAmount.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+                
+                const validityDate = new Date(document.getElementById('quotation-date').value);
+                validityDate.setDate(validityDate.getDate() + parseInt(document.getElementById('quotation-validity').value));
+                const validityDateStr = validityDate.toLocaleDateString();
+
+                const printHTML = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Quotation ${document.getElementById('quotation-number').value}</title>
+                        <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+                            
+                            body { 
+                                font-family: 'Inter', sans-serif; 
+                                margin: 0; 
+                                padding: 20px;
+                                color: #1a1a1a;
+                                line-height: 1.5;
+                                font-size: 12px;
+                                background: #ffffff;
+                            }
+                            
+                            .container {
+                                max-width: 800px;
+                                margin: 0 auto;
+                                border: 1px solid #e0e0e0;
+                                padding: 25px;
+                                background: #ffffff;
+                            }
+                            
+                            .header-section {
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: flex-start;
+                                margin-bottom: 25px;
+                                padding-bottom: 20px;
+                                border-bottom: 2px solid #2e8b57;
+                            }
+                            
+                            .company-info {
+                                flex: 1;
+                            }
+                            
+                            .company-name {
+                                font-size: 22px;
+                                font-weight: 700;
+                                color: #2e8b57;
+                                margin-bottom: 8px;
+                            }
+                            
+                            .company-details {
+                                font-size: 11px;
+                                color: #555;
+                                line-height: 1.4;
+                            }
+                            
+                            .document-info {
+                                text-align: right;
+                            }
+                            
+                            .document-title {
+                                font-size: 24px;
+                                font-weight: 700;
+                                color: #2e8b57;
+                                margin-bottom: 5px;
+                            }
+                            
+                            .document-number {
+                                font-size: 14px;
+                                font-weight: 600;
+                                color: #333;
+                                margin-bottom: 10px;
+                            }
+                            
+                            .document-date {
+                                font-size: 11px;
+                                color: #666;
+                            }
+                            
+                            .customer-section {
+                                display: flex;
+                                justify-content: space-between;
+                                margin-bottom: 20px;
+                                padding: 15px;
+                                background: #f8f9fa;
+                                border-radius: 4px;
+                            }
+                            
+                            .bill-to {
+                                flex: 1;
+                            }
+                            
+                            .section-title {
+                                font-size: 12px;
+                                font-weight: 600;
+                                color: #2e8b57;
+                                margin-bottom: 8px;
+                                text-transform: uppercase;
+                                letter-spacing: 0.5px;
+                            }
+                            
+                            .customer-details {
+                                font-size: 11px;
+                                color: #444;
+                                line-height: 1.4;
+                            }
+                            
+                            .validity-info {
+                                text-align: right;
+                                flex: 0 0 200px;
+                            }
+                            
+                            .validity-details {
+                                font-size: 11px;
+                                color: #444;
+                            }
+                            
+                            .items-table { 
+                                width: 100%; 
+                                border-collapse: collapse; 
+                                margin-bottom: 20px;
+                                font-size: 10px;
+                            }
+                            
+                            .items-table th { 
+                                background: #2e8b57; 
+                                color: white;
+                                text-align: center;
+                                padding: 8px 5px;
+                                font-weight: 600;
+                                border: 1px solid #1f6b43;
+                            }
+                            
+                            .items-table td { 
+                                padding: 6px 5px;
+                                border: 1px solid #e0e0e0;
+                                text-align: center;
+                            }
+                            
+                            .items-table .text-left {
+                                text-align: left;
+                            }
+                            
+                            .items-table .text-right {
+                                text-align: right;
+                            }
+                            
+                            .totals-section {
+                                width: 300px;
+                                margin-left: auto;
+                                margin-bottom: 20px;
+                            }
+                            
+                            .total-row { 
+                                display: flex; 
+                                justify-content: space-between; 
+                                margin-bottom: 6px; 
+                                padding-bottom: 6px; 
+                                border-bottom: 1px solid #e0e0e0;
+                                font-size: 11px;
+                            }
+                            
+                            .grand-total { 
+                                font-weight: 700; 
+                                font-size: 13px; 
+                                border-top: 2px solid #2e8b57; 
+                                padding-top: 8px; 
+                                margin-top: 8px;
+                            }
+                            
+                            .amount-in-words {
+                                margin-top: 15px;
+                                padding: 10px;
+                                background: #f8f9fa;
+                                border-radius: 4px;
+                                font-size: 11px;
+                                font-style: italic;
+                            }
+                            
+                            .gst-summary {
+                                display: flex;
+                                justify-content: space-between;
+                                margin-top: 15px;
+                                padding: 10px;
+                                background: #f0f7f0;
+                                border-radius: 4px;
+                                font-size: 11px;
+                            }
+                            
+                            .gst-breakdown {
+                                flex: 1;
+                            }
+                            
+                            .taxable-value {
+                                text-align: right;
+                                flex: 0 0 150px;                        
+                            }
+                            
+                            .terms-conditions {
+                                margin-top: 25px;
+                                padding: 15px;
+                                background: #f8f9fa;
+                                border-radius: 4px;
+                                font-size: 10px;
+                            }
+                            
+                            .terms-title {
+                                font-size: 11px;
+                                font-weight: 600;
+                                color: #2e8b57;
+                                margin-bottom: 8px;
+                                text-transform: uppercase;
+                            }
+                            
+                            .footer {
+                                margin-top: 30px;
+                                text-align: center;
+                                font-size: 9px;
+                                color: #666;
+                                border-top: 1px solid #e0e0e0;
+                                padding-top: 10px;
+                            }
+                            
+                            .bank-details {
+                                margin-top: 15px;
+                                padding: 10px;
+                                background: #f0f7f0;
+                                border-radius: 4px;
+                                font-size: 10px;
+                            }
+                            
+                            .notes-section {
+                                margin-top: 20px;
+                                padding: 15px;
+                                background: #fff8e1;
+                                border-radius: 4px;
+                                border-left: 4px solid #ffc107;
+                            }
+                            
+                            .no-print {
+                                display: none;
+                            }
+                            
+                            @media print {
+                                body { margin: 0; padding: 0; }
+                                .container { border: none; padding: 15px; }
+                                .no-print { display: none; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <!-- Header Section -->
+                            <div class="header-section">
+                                <div class="company-info">
+                                    <div class="company-name">${companyDetails.name}</div>
+                                    <div class="company-details">
+                                        ${companyFullAddress}<br>
+                                        ${companyDetails.phone ? 'Phone: ' + companyDetails.phone + ' | ' : ''}${companyDetails.email ? 'Email: ' + companyDetails.email + '<br>' : ''}
+                                        ${companyDetails.gstin ? 'GSTIN: ' + companyDetails.gstin + ' | ' : ''}${companyDetails.pan ? 'PAN: ' + companyDetails.pan : ''}
+                                    </div>
+                                </div>
+                                <div class="document-info">
+                                    <div class="document-title">QUOTATION</div>
+                                    <div class="document-number">${document.getElementById('quotation-number').value}</div>
+                                    <div class="document-date">Date: ${document.getElementById('quotation-date').value}</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Customer Section -->
+                            <div class="customer-section">
+                                <div class="bill-to">
+                                    <div class="section-title">Bill To</div>
+                                    <div class="customer-details">
+                                        <strong>${customerDetails.name}</strong><br>
+                                        ${customerFullAddress}<br>
+                                        ${customerDetails.phone ? 'Phone: ' + customerDetails.phone + ' | ' : ''}${customerDetails.email ? 'Email: ' + customerDetails.email + '<br>' : ''}
+                                        ${customerDetails.gstin ? 'GSTIN: ' + customerDetails.gstin : ''}
+                                    </div>
+                                </div>
+                                <div class="validity-info">
+                                    <div class="section-title">Quotation Validity</div>
+                                    <div class="validity-details">
+                                        Valid Until: ${validityDateStr}<br>
+                                        ${document.getElementById('quotation-validity').value} Days
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Items Table -->
+                            <table class="items-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 25px;">#</th>
+                                        <th>Description</th>
+                                        <th style="width: 60px;">HSN/SAC</th>
+                                        <th style="width: 40px;">Quantity</th>
+                                        <th style="width: 60px;">Rate (₹)</th>
+                                        <th style="width: 70px;">Discount</th>
+                                        <th style="width: 40px;">GST %</th>
+                                        <th style="width: 80px;">Amount (₹)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${itemsHTML}
+                                </tbody>
+                            </table>
+                            
+                            <!-- GST Summary -->
+                            <div class="gst-summary">
+                                <div class="gst-breakdown">
+                                    Total GST Amount: ₹${totalGst.toFixed(2)} | Total Taxable Value: ₹${taxableValue.toFixed(2)}
+                                </div>
+                            </div>
+                            
+                            <!-- Totals Section -->
+                            <div class="totals-section">
+                                <div class="total-row">
+                                    <span>Subtotal:</span>
+                                    <span>${subtotalAmountEl.textContent}</span>
+                                </div>
+                                <div class="total-row">
+                                    <span>Total Discount:</span>
+                                    <span>${totalDiscountEl.textContent}</span>
+                                </div>
+                                <div class="total-row">
+                                    <span>CGST:</span>
+                                    <span>${cgstAmountEl.textContent}</span>
+                                </div>
+                                <div class="total-row">
+                                    <span>SGST:</span>
+                                    <span>${sgstAmountEl.textContent}</span>
+                                </div>
+                                <div class="total-row grand-total">
+                                    <span>GRAND TOTAL:</span>
+                                    <span>${grandTotalEl.textContent}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Amount in Words -->
+                            <div class="amount-in-words">
+                                <strong>${amountInWordsEl.textContent}</strong>
+                            </div>
+                            
+                            <!-- Notes Section -->
+                            ${document.getElementById('quotation-notes').value ? `
+                            <div class="notes-section">
+                                <div class="terms-title">Notes</div>
+                                <p>${document.getElementById('quotation-notes').value}</p>
+                            </div>
+                            ` : ''}
+                                                
+                            <!-- Terms & Conditions -->
+                            <div class="terms-conditions">
+                                <div class="terms-title">Terms & Conditions</div>
+                                <p>1. This quotation is valid for ${document.getElementById('quotation-validity').value} days from the date of issue.</p>
+                                <p>2. Payment terms: 50% advance after confirmation, 50% before delivery.</p>
+                                <p>3. Prices are exclusive of taxes unless mentioned otherwise.</p>
+                                <p>4. Delivery timeline will be confirmed upon order confirmation.</p>
+                            </div>
+                            
+                            <!-- Footer -->
+                            <div class="footer">
+                                <p>This is a computer-generated quotation. No signature is required.</p>
+                                <p>Thank you for your business!</p>
+                            </div>
+                            
+                            <div class="no-print" style="margin-top: 30px; text-align: center;">
+                                <button onclick="window.print()" style="padding: 10px 20px; background-color: #2e8b57; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px;">Print Quotation</button>
+                                <button onclick="window.close()" style="padding: 10px 20px; background-color: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px;">Close</button>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `;
+                
+                return printHTML;
+            } catch (error) {
+                console.error('Error generating printable quotation:', error);
+                // Fallback to basic printable version if there's an error
+                return generateBasicPrintableQuotation();
+            }
+        }
+
+        /**
+         * Fallback function to generate basic printable quotation if the main function fails
+         */
+        function generateBasicPrintableQuotation() {
             const customerSelect = document.getElementById('customer-select');
             const companySelect = document.getElementById('company-select');
             const customerName = customerSelect.options[customerSelect.selectedIndex].text;
             const companyName = companySelect.options[companySelect.selectedIndex].text;
             
-            // Get company details from the database
-            const selectedCompanyId = companySelect.value;
-            let companyDetails = {};
-            
-            // In a real implementation, you would fetch company details from your database
-            // For now, we'll use the selected company name and placeholder details
-            companyDetails = {
-                name: companyName,
-                address: "123 Business Street, City, State - 560001",
-                phone: "+91 9876543210",
-                email: "info@company.com",
-                gstin: "29ABCDE1234F1Z5",
-                pan: "ABCDE1234F"
-            };
-            
-            // Get customer details from the database
-            const selectedCustomerId = customerSelect.value;
-            let customerDetails = {};
-            
-            // In a real implementation, you would fetch customer details from your database
-            customerDetails = {
-                name: customerName,
-                address: "456 Customer Avenue, City, State - 560002",
-                phone: "+91 9876543211",
-                email: "customer@email.com",
-                gstin: "27XYZWE9876G2H8"
-            };
-
             // Get items data
             const items = [];
             const rows = itemsTableBody.querySelectorAll('tr');
@@ -2391,8 +2897,6 @@
             
             let itemsHTML = '';
             let itemCounter = 1;
-            let taxableValue = 0;
-            let totalGst = 0;
             
             items.forEach(item => {
                 const baseAmount = item.quantity * item.rate;
@@ -2406,12 +2910,7 @@
                 
                 const amountAfterDiscount = baseAmount - discountAmount;
                 const gstAmount = amountAfterDiscount * (item.gst / 100);
-                const cgstAmount = gstAmount / 2;
-                const sgstAmount = gstAmount / 2;
                 const totalAmount = amountAfterDiscount + gstAmount;
-                
-                taxableValue += amountAfterDiscount;
-                totalGst += gstAmount;
                 
                 itemsHTML += `
                     <tr>
@@ -2431,377 +2930,91 @@
             validityDate.setDate(validityDate.getDate() + parseInt(document.getElementById('quotation-validity').value));
             const validityDateStr = validityDate.toLocaleDateString();
 
-            const printHTML = `
+            return `
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <title>Quotation ${document.getElementById('quotation-number').value}</title>
                     <style>
-                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-                        
-                        body { 
-                            font-family: 'Inter', sans-serif; 
-                            margin: 0; 
-                            padding: 20px;
-                            color: #1a1a1a;
-                            line-height: 1.5;
-                            font-size: 12px;
-                            background: #ffffff;
-                        }
-                        
-                        .container {
-                            max-width: 800px;
-                            margin: 0 auto;
-                            border: 1px solid #e0e0e0;
-                            padding: 25px;
-                            background: #ffffff;
-                        }
-                        
-                        .header-section {
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: flex-start;
-                            margin-bottom: 25px;
-                            padding-bottom: 20px;
-                            border-bottom: 2px solid #2e8b57;
-                        }
-                        
-                        .company-info {
-                            flex: 1;
-                        }
-                        
-                        .company-name {
-                            font-size: 22px;
-                            font-weight: 700;
-                            color: #2e8b57;
-                            margin-bottom: 8px;
-                        }
-                        
-                        .company-details {
-                            font-size: 11px;
-                            color: #555;
-                            line-height: 1.4;
-                        }
-                        
-                        .document-info {
-                            text-align: right;
-                        }
-                        
-                        .document-title {
-                            font-size: 24px;
-                            font-weight: 700;
-                            color: #2e8b57;
-                            margin-bottom: 5px;
-                        }
-                        
-                        .document-number {
-                            font-size: 14px;
-                            font-weight: 600;
-                            color: #333;
-                            margin-bottom: 10px;
-                        }
-                        
-                        .document-date {
-                            font-size: 11px;
-                            color: #666;
-                        }
-                        
-                        .customer-section {
-                            display: flex;
-                            justify-content: space-between;
-                            margin-bottom: 20px;
-                            padding: 15px;
-                            background: #f8f9fa;
-                            border-radius: 4px;
-                        }
-                        
-                        .bill-to {
-                            flex: 1;
-                        }
-                        
-                        .section-title {
-                            font-size: 12px;
-                            font-weight: 600;
-                            color: #2e8b57;
-                            margin-bottom: 8px;
-                            text-transform: uppercase;
-                            letter-spacing: 0.5px;
-                        }
-                        
-                        .customer-details {
-                            font-size: 11px;
-                            color: #444;
-                            line-height: 1.4;
-                        }
-                        
-                        .validity-info {
-                            text-align: right;
-                            flex: 0 0 200px;
-                        }
-                        
-                        .validity-details {
-                            font-size: 11px;
-                            color: #444;
-                        }
-                        
-                        .items-table { 
-                            width: 100%; 
-                            border-collapse: collapse; 
-                            margin-bottom: 20px;
-                            font-size: 10px;
-                        }
-                        
-                        .items-table th { 
-                            background: #2e8b57; 
-                            color: white;
-                            text-align: center;
-                            padding: 8px 5px;
-                            font-weight: 600;
-                            border: 1px solid #1f6b43;
-                        }
-                        
-                        .items-table td { 
-                            padding: 6px 5px;
-                            border: 1px solid #e0e0e0;
-                            text-align: center;
-                        }
-                        
-                        .items-table .text-left {
-                            text-align: left;
-                        }
-                        
-                        .items-table .text-right {
-                            text-align: right;
-                        }
-                        
-                        .totals-section {
-                            width: 300px;
-                            margin-left: auto;
-                            margin-bottom: 20px;
-                        }
-                        
-                        .total-row { 
-                            display: flex; 
-                            justify-content: space-between; 
-                            margin-bottom: 6px; 
-                            padding-bottom: 6px; 
-                            border-bottom: 1px solid #e0e0e0;
-                            font-size: 11px;
-                        }
-                        
-                        .grand-total { 
-                            font-weight: 700; 
-                            font-size: 13px; 
-                            border-top: 2px solid #2e8b57; 
-                            padding-top: 8px; 
-                            margin-top: 8px;
-                        }
-                        
-                        .amount-in-words {
-                            margin-top: 15px;
-                            padding: 10px;
-                            background: #f8f9fa;
-                            border-radius: 4px;
-                            font-size: 11px;
-                            font-style: italic;
-                        }
-                        
-                        .gst-summary {
-                            display: flex;
-                            justify-content: space-between;
-                            margin-top: 15px;
-                            padding: 10px;
-                            background: #f0f7f0;
-                            border-radius: 4px;
-                            font-size: 11px;
-                        }
-                        
-                        .gst-breakdown {
-                            flex: 1;
-                        }
-                        
-                        .taxable-value {
-                            text-align: right;
-                            flex: 0 0 150px;                        
-                        }
-                        
-                        .terms-conditions {
-                            margin-top: 25px;
-                            padding: 15px;
-                            background: #f8f9fa;
-                            border-radius: 4px;
-                            font-size: 10px;
-                        }
-                        
-                        .terms-title {
-                            font-size: 11px;
-                            font-weight: 600;
-                            color: #2e8b57;
-                            margin-bottom: 8px;
-                            text-transform: uppercase;
-                        }
-                        
-                        .footer {
-                            margin-top: 30px;
-                            text-align: center;
-                            font-size: 9px;
-                            color: #666;
-                            border-top: 1px solid #e0e0e0;
-                            padding-top: 10px;
-                        }
-                        
-                        .bank-details {
-                            margin-top: 15px;
-                            padding: 10px;
-                            background: #f0f7f0;
-                            border-radius: 4px;
-                            font-size: 10px;
-                        }
-                        
-                        .notes-section {
-                            margin-top: 20px;
-                            padding: 15px;
-                            background: #fff8e1;
-                            border-radius: 4px;
-                            border-left: 4px solid #ffc107;
-                        }
-                        
-                        .no-print {
-                            display: none;
-                        }
-                        
-                        @media print {
-                            body { margin: 0; padding: 0; }
-                            .container { border: none; padding: 15px; }
-                            .no-print { display: none; }
-                        }
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+                        .company { flex: 1; }
+                        .quotation-info { text-align: right; }
+                        .customer { margin-bottom: 20px; padding: 10px; background: #f5f5f5; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background-color: #2e8b57; color: white; }
+                        .totals { width: 300px; margin-left: auto; }
+                        .total-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+                        .grand-total { font-weight: bold; border-top: 2px solid #2e8b57; padding-top: 5px; }
+                        .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
                     </style>
                 </head>
                 <body>
-                    <div class="container">
-                        <!-- Header Section -->
-                        <div class="header-section">
-                            <div class="company-info">
-                                <div class="company-name">${companyDetails.name}</div>
-                                <div class="company-details">
-                                    ${companyDetails.address}<br>
-                                    Phone: ${companyDetails.phone} | Email: ${companyDetails.email}<br>
-                                    GSTIN: ${companyDetails.gstin} | PAN: ${companyDetails.pan}
-                                </div>
-                            </div>
-                            <div class="document-info">
-                                <div class="document-title">QUOTATION</div>
-                                <div class="document-number">${document.getElementById('quotation-number').value}</div>
-                                <div class="document-date">Date: ${document.getElementById('quotation-date').value}</div>
-                            </div>
+                    <div class="header">
+                        <div class="company">
+                            <h2>${companyName}</h2>
+                            <p>Quotation Number: ${document.getElementById('quotation-number').value}</p>
                         </div>
-                        
-                        <!-- Customer Section -->
-                        <div class="customer-section">
-                            <div class="bill-to">
-                                <div class="section-title">Bill To</div>
-                                <div class="customer-details">
-                                    <strong>${customerDetails.name}</strong><br>
-                                    ${customerDetails.address}<br>
-                                    Phone: ${customerDetails.phone} | Email: ${customerDetails.email}<br>
-                                    ${customerDetails.gstin ? 'GSTIN: ' + customerDetails.gstin : ''}
-                                </div>
-                            </div>
-                            <div class="validity-info">
-                                <div class="section-title">Quotation Validity</div>
-                                <div class="validity-details">
-                                    Valid Until: ${validityDateStr}<br>
-                                    ${document.getElementById('quotation-validity').value} Days
-                                </div>
-                            </div>
+                        <div class="quotation-info">
+                            <h2>QUOTATION</h2>
+                            <p>Date: ${document.getElementById('quotation-date').value}</p>
                         </div>
-                        
-                        <!-- Items Table -->
-                        <table class="items-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 25px;">#</th>
-                                    <th>Description</th>
-                                    <th style="width: 60px;">HSN/SAC</th>
-                                    <th style="width: 40px;">Quantity</th>
-                                    <th style="width: 60px;">Rate (₹)</th>
-                                    <th style="width: 70px;">Discount</th>
-                                    <th style="width: 40px;">GST %</th>
-                                    <th style="width: 80px;">Amount (₹)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${itemsHTML}
-                            </tbody>
-                        </table>
-                        
-                        <!-- GST Summary -->
-                        <div class="gst-summary">
-                            <div class="gst-breakdown">
-                                Total GST Amount: ₹${totalGst.toFixed(2)}        Total Taxable Value: ₹${taxableValue.toFixed(2)}
-                            </div>
+                    </div>
+                    
+                    <div class="customer">
+                        <h3>Bill To: ${customerName}</h3>
+                        <p>Valid Until: ${validityDateStr} (${document.getElementById('quotation-validity').value} days)</p>
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Description</th>
+                                <th>HSN/SAC</th>
+                                <th>Qty</th>
+                                <th>Rate</th>
+                                <th>Discount</th>
+                                <th>GST%</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHTML}
+                        </tbody>
+                    </table>
+                    
+                    <div class="totals">
+                        <div class="total-row">
+                            <span>Subtotal:</span>
+                            <span>${subtotalAmountEl.textContent}</span>
                         </div>
-                        
-                        <!-- Totals Section -->
-                        <div class="totals-section">
-                            <div class="total-row">
-                                <span>Subtotal:</span>
-                                <span>${subtotalAmountEl.textContent}</span>
-                            </div>
-                            <div class="total-row">
-                                <span>Total Discount:</span>
-                                <span>${totalDiscountEl.textContent}</span>
-                            </div>
-                            <div class="total-row">
-                                <span>CGST:</span>
-                                <span>${cgstAmountEl.textContent}</span>
-                            </div>
-                            <div class="total-row">
-                                <span>SGST:</span>
-                                <span>${sgstAmountEl.textContent}</span>
-                            </div>
-                            <div class="total-row grand-total">
-                                <span>GRAND TOTAL:</span>
-                                <span>${grandTotalEl.textContent}</span>
-                            </div>
+                        <div class="total-row">
+                            <span>Discount:</span>
+                            <span>${totalDiscountEl.textContent}</span>
                         </div>
-                        
-                        <!-- Amount in Words -->
-                        <div class="amount-in-words">
-                            <strong>${amountInWordsEl.textContent}</strong>
+                        <div class="total-row">
+                            <span>CGST:</span>
+                            <span>${cgstAmountEl.textContent}</span>
                         </div>
-                        
-                        <!-- Notes Section -->
-                        ${document.getElementById('quotation-notes').value ? `
-                        <div class="notes-section">
-                            <div class="terms-title">Notes</div>
-                            <p>${document.getElementById('quotation-notes').value}</p>
+                        <div class="total-row">
+                            <span>SGST:</span>
+                            <span>${sgstAmountEl.textContent}</span>
                         </div>
-                        ` : ''}
-                                                
-                        <!-- Terms & Conditions -->
-                        <div class="terms-conditions">
-                            <div class="terms-title">Terms & Conditions</div>
-                            <p>1. This quotation is valid for ${document.getElementById('quotation-validity').value} days from the date of issue.</p>
-                            <p>2. Payment terms: 50% advance after confirmation, 50% before delivery.</p>
+                        <div class="total-row grand-total">
+                            <span>Grand Total:</span>
+                            <span>${grandTotalEl.textContent}</span>
                         </div>
-                        
-                        <!-- Footer -->
-                        <div class="footer">
-                            <p>This is a computer-generated quotation. No signature is required.</p>
-                            <p>Thank you for your business!</p>
-                        </div>
-                        
-                        <div class="no-print" style="margin-top: 30px; text-align: center;">
-                            <button onclick="window.print()" style="padding: 10px 20px; background-color: #2e8b57; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px;">Print Quotation</button>
-                            <button onclick="window.close()" style="padding: 10px 20px; background-color: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px;">Close</button>
-                        </div>
+                    </div>
+                    
+                    <div class="footer">
+                        <p>${amountInWordsEl.textContent}</p>
+                        <p>This is a computer-generated quotation.</p>
                     </div>
                 </body>
                 </html>
             `;
-            
-            return printHTML;
         }
 
         /**
@@ -2809,8 +3022,8 @@
          */
         function setupExportFunctions() {
             // Print quotation
-            printQuotationBtn.addEventListener('click', function() {
-                const printHTML = generatePrintableQuotation();
+            printQuotationBtn.addEventListener('click', async function() {
+                const printHTML = await generatePrintableQuotation();
                 const printWindow = window.open('', '_blank', 'width=1000,height=800');
                 printWindow.document.write(printHTML);
                 printWindow.document.close();
@@ -2822,8 +3035,8 @@
             });
             
             // PDF export
-            pdfQuotationBtn.addEventListener('click', function() {
-                const printHTML = generatePrintableQuotation();
+            pdfQuotationBtn.addEventListener('click', async function() {
+                const printHTML = await generatePrintableQuotation();
                 const printWindow = window.open('', '_blank', 'width=1000,height=800');
                 printWindow.document.write(printHTML);
                 printWindow.document.close();

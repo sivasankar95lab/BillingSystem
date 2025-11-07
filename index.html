@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Portal - Billing Soft v1</title>
+    <link rel="icon" type="image/x-icon" href="asset/favicon.png">
+    <style>
+        /* Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary-green: #2e8b57;
+            --light-green: #e8f5e9;
+            --dark-green: #1b5e20;
+            --accent-green: #4caf50;
+            --error-color: #f44336;
+            --success-color: #4caf50;
+            --text-dark: #333;
+            --text-light: #666;
+            --white: #ffffff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            color: var(--text-dark);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: var(--white);
+            box-shadow: var(--shadow);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .main-logo {
+            height: 50px;
+        }
+
+        .brand-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-green);
+        }
+
+        .brand-tagline {
+            font-size: 14px;
+            color: var(--text-light);
+            margin-top: -5px;
+        }
+
+        .slab-logo {
+            height: 40px;
+        }
+
+        /* Main Content Styles */
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 0;
+        }
+
+        .auth-container {
+            background-color: var(--white);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 450px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, var(--primary-green), var(--accent-green));
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-title {
+            font-size: 28px;
+            color: var(--primary-green);
+            margin-bottom: 10px;
+        }
+
+        .auth-subtitle {
+            color: var(--text-light);
+            font-size: 16px;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 2px rgba(46, 139, 87, 0.2);
+        }
+
+        .password-container {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-green);
+            color: var(--white);
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            background-color: var(--dark-green);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Message Styles */
+        .message {
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .error-message {
+            background-color: rgba(244, 67, 54, 0.1);
+            color: var(--error-color);
+            border: 1px solid rgba(244, 67, 54, 0.2);
+        }
+
+        .success-message {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: var(--success-color);
+            border: 1px solid rgba(76, 175, 80, 0.2);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Footer Styles */
+        footer {
+            background-color: var(--dark-green);
+            color: var(--white);
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .copyright {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .auth-container {
+                padding: 30px 20px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .brand-name {
+                font-size: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .auth-container {
+                padding: 20px 15px;
+            }
+            
+            .auth-title {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="asset/logo.svg" alt="Billing Soft Logo" class="main-logo">
+                    <div>
+                        <h1 class="brand-name">Billing Soft v1</h1>
+                        <p class="brand-tagline">Efficient billing solutions for modern businesses</p>
+                    </div>
+                </div>
+                <img src="asset/companylogo.svg" alt="S Lab Logo" class="slab-logo">
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Section -->
+    <main>
+        <div class="container">
+            <div class="auth-container">
+                <div class="auth-header">
+                    <h2 class="auth-title">Authentication Portal</h2>
+                    <p class="auth-subtitle">Secure access to Billing Soft v1</p>
+                </div>
+                
+                <!-- Error/Success Message Container -->
+                <div id="message-container" class="hidden"></div>
+                
+                <!-- Login Form -->
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="password-container">
+                            <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
+                            <button type="button" class="toggle-password" id="toggle-password">Show</button>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn" id="login-btn">Sign In</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Section -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <p class="copyright">&copy; 2025 Billing Soft v1. All rights reserved.</p>
+                <p class="copyright">Developed by S Lab</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Constants for API configuration
+        const BIN_ID = '690b6c3143b1c97be99ad21a';
+        const API_KEY = '$2a$10$4YO2j/sfX.tVtJ.qy7g7OeKvOhdNXJKd.IzwhkTslv1OdA71hBF6O';
+        const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+        const VALID_PASSWORD = 'adminpass';
+
+        // DOM Elements
+        const loginForm = document.getElementById('login-form');
+        const passwordInput = document.getElementById('password');
+        const togglePasswordBtn = document.getElementById('toggle-password');
+        const loginBtn = document.getElementById('login-btn');
+        const messageContainer = document.getElementById('message-container');
+
+        /**
+         * Toggle password visibility
+         */
+        togglePasswordBtn.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.textContent = type === 'password' ? 'Show' : 'Hide';
+        });
+
+        /**
+         * Display message to user
+         * @param {string} message - The message to display
+         * @param {string} type - The type of message ('error' or 'success')
+         */
+        function showMessage(message, type) {
+            messageContainer.textContent = message;
+            messageContainer.className = 'message';
+            
+            if (type === 'error') {
+                messageContainer.classList.add('error-message');
+            } else if (type === 'success') {
+                messageContainer.classList.add('success-message');
+            }
+            
+            messageContainer.classList.remove('hidden');
+            
+            // Auto-hide success messages after 3 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    messageContainer.classList.add('hidden');
+                }, 3000);
+            }
+        }
+
+        /**
+         * Record login activity to JSONBin
+         * @param {string} status - The status of the login attempt ('success' or 'failure')
+         * @param {string} message - Additional message about the login attempt
+         */
+        async function recordLoginActivity(status, message) {
+            try {
+                // Get current data from JSONBin
+                const response = await fetch(API_URL + '/latest', {
+                    method: 'GET',
+                    headers: {
+                        'X-Master-Key': API_KEY
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch data from JSONBin');
+                }
+                
+                const data = await response.json();
+                
+                // Create new activity record
+                const newActivity = {
+                    timestamp: new Date().toISOString(),
+                    status: status,
+                    message: message
+                };
+                
+                // Update activities array
+                const updatedActivities = data.record.activities ? 
+                    [...data.record.activities, newActivity] : [newActivity];
+                
+                // Update the bin with new data
+                const updateResponse = await fetch(API_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': API_KEY
+                    },
+                    body: JSON.stringify({
+                        ...data.record,
+                        activities: updatedActivities
+                    })
+                });
+                
+                if (!updateResponse.ok) {
+                    throw new Error('Failed to update JSONBin');
+                }
+                
+                console.log('Login activity recorded successfully');
+            } catch (error) {
+                console.error('Error recording login activity:', error);
+                // We don't show this error to the user to maintain UX
+            }
+        }
+
+        /**
+         * Handle form submission
+         * @param {Event} event - The form submission event
+         */
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            // Get password value
+            const password = passwordInput.value;
+            
+            // Validate password
+            if (!password) {
+                showMessage('Please enter a password', 'error');
+                passwordInput.focus();
+                return;
+            }
+            
+            // Show loading state
+            loginBtn.textContent = 'Authenticating...';
+            loginBtn.disabled = true;
+            
+            try {
+                // Validate password
+                if (password === VALID_PASSWORD) {
+                    // Record successful login
+                    await recordLoginActivity('success', 'User authenticated successfully');
+                    
+                    // Show success message
+                    showMessage('Login successful! Redirecting to dashboard...', 'success');
+                    
+                    // Redirect to dashboard after a short delay
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1500);
+                } else {
+                    // Record failed login
+                    await recordLoginActivity('failure', 'Invalid password provided');
+                    
+                    // Show error message
+                    showMessage('Invalid password. Please try again.', 'error');
+                    passwordInput.focus();
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showMessage('An error occurred during authentication. Please try again.', 'error');
+            } finally {
+                // Reset button state
+                loginBtn.textContent = 'Sign In';
+                loginBtn.disabled = false;
+            }
+        }
+
+        // Add event listener for form submission
+        loginForm.addEventListener('submit', handleLogin);
+
+        // Add focus styling to form inputs
+        const formInputs = document.querySelectorAll('.form-input');
+        formInputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('focused');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('focused');
+            });
+        });
+    </script>
+</body>
+</html>

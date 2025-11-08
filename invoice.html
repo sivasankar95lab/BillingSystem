@@ -2999,48 +2999,16 @@
         async function handleFormSubmit(event) {
             event.preventDefault();
             
-            // Collect items data
-            const items = [];
-            const rows = itemsTableBody.querySelectorAll('tr');
-            rows.forEach(row => {
-                const description = row.querySelector('.item-description').value.trim();
-                const hsn = row.querySelector('.item-hsn').value.trim();
-                const quantity = parseFloat(row.querySelector('.item-quantity').value) || 0;
-                const rate = parseFloat(row.querySelector('.item-rate').value) || 0;
-                const discountType = row.querySelector('.discount-type-select').value;
-                const discountValue = parseFloat(row.querySelector('.discount-value-input').value) || 0;
-                const gst = parseFloat(row.querySelector('.item-gst').value) || 0;
-                
-                items.push({
-                    description,
-                    hsn,
-                    quantity,
-                    rate,
-                    discountType,
-                    discountValue,
-                    gst
-                });
-            });
-            
-            // Get form data
-            const formData = {
-                number: document.getElementById('invoice-number').value,
-                date: document.getElementById('invoice-date').value,
-                dueDate: document.getElementById('due-date').value,
-                customerId: document.getElementById('customer-select').value,
-                companyId: document.getElementById('company-select').value,
-                status: document.getElementById('invoice-status').value,
-                notes: document.getElementById('invoice-notes').value.trim(),
-                items: items
-            };
+            // Get form data using getCurrentInvoiceData which includes customerName and companyName
+            const invoiceData = getCurrentInvoiceData();
             
             // Validate form data
-            if (!validateInvoiceForm(formData)) {
+            if (!validateInvoiceForm(invoiceData)) {
                 return;
             }
             
             // Save invoice
-            await saveInvoice(formData);
+            await saveInvoice(invoiceData);
         }
 
         /**

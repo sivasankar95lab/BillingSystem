@@ -3,495 +3,832 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Authentication Portal - Billing Soft v1</title>
-    <link rel="icon" type="image/x-icon" href="asset/favicon.png">
+    <title>Invoice Generator - Sivalingam & Co.</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* Global Styles */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
         }
-
-        :root {
-            --primary-green: #2e8b57;
-            --light-green: #e8f5e9;
-            --dark-green: #1b5e20;
-            --accent-green: #4caf50;
-            --error-color: #f44336;
-            --success-color: #4caf50;
-            --text-dark: #333;
-            --text-light: #666;
-            --white: #ffffff;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
-        }
-
+        
         body {
-            background-color: #f9f9f9;
-            color: var(--text-dark);
-            line-height: 1.6;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
+            background-color: #f5f5f5;
+            padding: 20px;
         }
-
+        
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        /* Header Styles */
-        header {
-            background-color: var(--white);
-            box-shadow: var(--shadow);
-            padding: 15px 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .main-logo {
-            height: 50px;
-        }
-
-        .brand-name {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--primary-green);
-        }
-
-        .brand-tagline {
-            font-size: 14px;
-            color: var(--text-light);
-            margin-top: -5px;
-        }
-
-        .slab-logo {
-            height: 40px;
-        }
-
-        /* Main Content Styles */
-        main {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 40px 0;
-        }
-
-        .auth-container {
-            background-color: var(--white);
-            border-radius: 10px;
-            box-shadow: var(--shadow);
-            width: 100%;
-            max-width: 450px;
-            padding: 40px;
-            position: relative;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
             overflow: hidden;
         }
-
-        .auth-container::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
-            background: linear-gradient(to right, var(--primary-green), var(--accent-green));
-        }
-
-        .auth-header {
+        
+        header {
+            background-color: #4a6fdc;
+            color: white;
+            padding: 20px;
             text-align: center;
-            margin-bottom: 30px;
         }
-
-        .auth-title {
-            font-size: 28px;
-            color: var(--primary-green);
-            margin-bottom: 10px;
+        
+        .form-container {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
         }
-
-        .auth-subtitle {
-            color: var(--text-light);
-            font-size: 16px;
+        
+        .preview-container {
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            background-color: #e0e0e0;
         }
-
-        /* Form Styles */
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
+        
+        .invoice-preview {
+            width: 210mm;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
             display: block;
-            margin-bottom: 8px;
-            color: var(--text-dark);
-            font-weight: 500;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-            transition: var(--transition);
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary-green);
-            box-shadow: 0 0 0 2px rgba(46, 139, 87, 0.2);
-        }
-
-        .password-container {
             position: relative;
         }
-
-        .toggle-password {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: var(--text-light);
-            cursor: pointer;
+        
+        @media screen {
+            .invoice-preview {
+                max-width: 794px;
+            }
         }
-
-        .submit-btn {
+        
+        .page-content {
+            min-height: 267mm;
+            padding: 15mm;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select, textarea {
             width: 100%;
-            padding: 12px;
-            background-color: var(--primary-green);
-            color: var(--white);
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .btn {
+            background-color: #4a6fdc;
+            color: white;
             border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 4px;
             cursor: pointer;
-            transition: var(--transition);
-            margin-top: 10px;
+            font-size: 16px;
+            margin-right: 10px;
+            transition: background-color 0.3s ease;
         }
-
-        .submit-btn:hover {
-            background-color: var(--dark-green);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        
+        .btn:hover {
+            background-color: #3a5dbd;
         }
-
-        .submit-btn:active {
-            transform: translateY(0);
+        
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transition: none;
         }
-
-        /* Message Styles */
-        .message {
-            padding: 12px;
-            border-radius: 5px;
-            margin-bottom: 20px;
+        
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-success {
+            background-color: #2ecc71;
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        
+        .table-container {
+            margin: 20px 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+        }
+        
+        .invoice-header {
             text-align: center;
-            font-weight: 500;
+            margin-bottom: 25px;
         }
-
-        .error-message {
-            background-color: rgba(244, 67, 54, 0.1);
-            color: var(--error-color);
-            border: 1px solid rgba(244, 67, 54, 0.2);
+        
+        .invoice-heading {
+            font-size: 42px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 25px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            border-bottom: 3px solid #333;
+            padding-bottom: 10px;
+            display: inline-block;
         }
-
-        .success-message {
-            background-color: rgba(76, 175, 80, 0.1);
-            color: var(--success-color);
-            border: 1px solid rgba(76, 175, 80, 0.2);
+        
+        .invoice-header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
         }
-
+        
+        .invoice-header p {
+            margin: 4px 0;
+            font-size: 14px;
+        }
+        
+        .invoice-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            gap: 20px;
+        }
+        
+        .invoice-details div {
+            flex: 1;
+        }
+        
+        .invoice-details h3 {
+            margin-bottom: 12px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 6px;
+            font-size: 16px;
+        }
+        
+        .invoice-details p {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        
+        .invoice-table {
+            margin-bottom: 25px;
+            page-break-inside: avoid;
+        }
+        
+        .invoice-table th {
+            background-color: #f2f2f2;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            padding: 10px 8px;
+        }
+        
+        .invoice-table td {
+            text-align: center;
+            padding: 10px 8px;
+            font-size: 14px;
+        }
+        
+        .invoice-table td:first-child {
+            text-align: center;
+        }
+        
+        .invoice-table td:nth-child(2) {
+            text-align: left;
+        }
+        
+        .invoice-totals {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 25px;
+            page-break-inside: avoid;
+        }
+        
+        .invoice-totals table {
+            width: 350px;
+            border: none;
+        }
+        
+        .invoice-totals td {
+            padding: 8px 12px;
+            border: none;
+            font-size: 14px;
+        }
+        
+        .invoice-totals td:last-child {
+            text-align: right;
+            font-weight: bold;
+        }
+        
+        .invoice-totals tr:last-child td {
+            border-top: 2px solid #333;
+            font-size: 16px;
+            padding-top: 12px;
+        }
+        
+        .amount-in-words {
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #4a6fdc;
+            font-size: 14px;
+            page-break-inside: avoid;
+        }
+        
+        .amount-in-words strong {
+            color: #333;
+        }
+        
+        .invoice-footer {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+            page-break-inside: avoid;
+        }
+        
+        .invoice-footer div {
+            width: 45%;
+        }
+        
+        .signature {
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+            text-align: center;
+        }
+        
+        .signature p {
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        
+        .signature-img {
+            max-width: 219px;
+            height: 57px;
+            margin: 15px 0;
+            display: block;
+        }
+        
+        .signature-placeholder {
+            width: 219px;
+            height: 57px;
+            border: 1px dashed #ccc;
+            margin: 15px auto;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 12px;
+        }
+        
+        .item-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .item-row input {
+            padding: 5px;
+        }
+        
+        .item-row input:nth-child(1) {
+            width: 50px;
+        }
+        
+        .item-row input:nth-child(2) {
+            flex: 1;
+        }
+        
+        .item-row input:nth-child(3),
+        .item-row input:nth-child(4),
+        .item-row input:nth-child(5) {
+            width: 100px;
+        }
+        
         .hidden {
             display: none;
         }
-
-        /* Footer Styles */
-        footer {
-            background-color: var(--dark-green);
-            color: var(--white);
-            padding: 20px 0;
+        
+        .action-buttons {
             text-align: center;
+            margin: 20px 0;
         }
-
-        .footer-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
+        
+        .computer-generated {
+            text-align: center;
+            font-style: italic;
+            color: #666;
+            font-size: 12px;
+            margin-top: auto;
+            padding-top: 20px;
         }
-
-        .copyright {
-            font-size: 14px;
-            opacity: 0.8;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .auth-container {
-                padding: 30px 20px;
+        
+        @media print {
+            body {
+                background-color: white;
+                padding: 0;
             }
             
-            .header-content {
-                flex-direction: column;
-                gap: 15px;
+            .form-container, .action-buttons, header {
+                display: none;
             }
             
-            .brand-name {
-                font-size: 20px;
+            .container {
+                box-shadow: none;
+                max-width: none;
+                margin: 0;
+            }
+            
+            .preview-container {
+                padding: 0;
+                background-color: white;
+            }
+            
+            .invoice-preview {
+                box-shadow: none;
+                margin: 0;
+                width: 210mm;
+            }
+            
+            .page-content {
+                min-height: 267mm;
+                page-break-inside: avoid;
+            }
+            
+            @page {
+                size: A4;
+                margin: 15mm;
+            }
+            
+            .invoice-table tr {
+                page-break-inside: avoid;
+            }
+            
+            .invoice-totals, .amount-in-words, .invoice-footer {
+                page-break-inside: avoid;
             }
         }
-
-        @media (max-width: 480px) {
-            .auth-container {
-                padding: 20px 15px;
-            }
-            
-            .auth-title {
-                font-size: 24px;
+        
+        @media screen and (max-width: 900px) {
+            .invoice-preview {
+                transform: scale(0.8);
+                transform-origin: top center;
+                margin-bottom: -20%;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Header Section -->
-    <header>
-        <div class="container">
-            <div class="header-content">
-                <div class="logo-container">
-                    <img src="asset/logo.svg" alt="Billing Soft Logo" class="main-logo">
-                    <div>
-                        <h1 class="brand-name">Billing Soft v1</h1>
-                        <p class="brand-tagline">Efficient billing solutions for modern businesses</p>
+    <div class="container">
+        <header>
+            <h1>Invoice Generator - Sivalingam & Co.</h1>
+        </header>
+        
+        <div class="form-container">
+            <h2>Invoice Details</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="invoiceNo">Invoice No.</label>
+                    <input type="text" id="invoiceNo" placeholder="Enter invoice number">
+                </div>
+                <div class="form-group">
+                    <label for="invoiceDate">Invoice Date</label>
+                    <input type="date" id="invoiceDate">
+                </div>
+            </div>
+            
+            <h3>Customer Details</h3>
+            <div class="form-group">
+                <label for="receiverName">Name</label>
+                <input type="text" id="receiverName" placeholder="Enter customer name">
+            </div>
+            <div class="form-group">
+                <label for="receiverAddress">Address</label>
+                <textarea id="receiverAddress" rows="3" placeholder="Enter customer address"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="receiverMobile">Mobile Number</label>
+                <input type="text" id="receiverMobile" placeholder="Enter customer mobile number">
+            </div>
+            
+            <h3>Items</h3>
+            <div class="table-container">
+                <div id="itemsContainer">
+                    <div class="item-row">
+                        <input type="text" placeholder="S.No" class="item-sno" value="1">
+                        <input type="text" placeholder="Description of Goods" class="item-desc">
+                        <input type="number" placeholder="Quantity" class="item-qty">
+                        <input type="number" placeholder="Rate" class="item-rate">
+                        <input type="number" placeholder="Amount" class="item-amount" readonly>
                     </div>
                 </div>
-                <img src="asset/companylogo.svg" alt="S Lab Logo" class="slab-logo">
+                <button type="button" class="btn" id="addItem">Add Item</button>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="roundOff">Round Off</label>
+                    <input type="number" id="roundOff" placeholder="Enter round off value" value="0">
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button type="button" class="btn btn-success" id="generateInvoice">Generate Invoice</button>
+                <button type="button" class="btn" id="downloadPDF">Download PDF</button>
+                <button type="button" class="btn btn-danger" id="resetForm">Reset</button>
             </div>
         </div>
-    </header>
-
-    <!-- Main Content Section -->
-    <main>
-        <div class="container">
-            <div class="auth-container">
-                <div class="auth-header">
-                    <h2 class="auth-title">Authentication Portal</h2>
-                    <p class="auth-subtitle">Secure access to Billing Soft v1</p>
-                </div>
-                
-                <!-- Error/Success Message Container -->
-                <div id="message-container" class="hidden"></div>
-                
-                <!-- Login Form -->
-                <form id="login-form">
-                    <div class="form-group">
-                        <label for="password" class="form-label">Password</label>
-                        <div class="password-container">
-                            <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
-                            <button type="button" class="toggle-password" id="toggle-password">Show</button>
+        
+        <div class="preview-container">
+            <div id="invoicePreview" class="invoice-preview hidden">
+                <div class="page-content">
+                    <div class="invoice-header">
+                        <div class="invoice-heading">INVOICE</div>
+                        <h1>SIVALINGAM & CO.</h1>
+                        <p>NO.1 OLD MAHABALIPURAM ROAD, KANDANCHAVDI, CHENNAI, TAMIL NADU - 600096</p>
+                        <p>PHONE: 9444615746 | 9445106738</p>
+                    </div>
+                    
+                    <div class="invoice-details">
+                        <div>
+                            <h3>Invoice Details</h3>
+                            <p><strong>Invoice No:</strong> <span id="previewInvoiceNo"></span></p>
+                            <p><strong>Date:</strong> <span id="previewInvoiceDate"></span></p>
+                        </div>
+                        <div>
+                            <h3>Customer Details</h3>
+                            <p><strong>Name:</strong> <span id="previewReceiverName"></span></p>
+                            <p><strong>Address:</strong> <span id="previewReceiverAddress"></span></p>
+                            <p><strong>Mobile:</strong> <span id="previewReceiverMobile"></span></p>
                         </div>
                     </div>
                     
-                    <button type="submit" class="submit-btn" id="login-btn">Sign In</button>
-                </form>
+                    <table class="invoice-table">
+                        <thead>
+                            <tr>
+                                <th>S. NO.</th>
+                                <th>Description of Goods</th>
+                                <th>Quantity</th>
+                                <th>Rate (₹)</th>
+                                <th>Amount (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewItems">
+                        </tbody>
+                    </table>
+                    
+                    <div class="invoice-totals">
+                        <table>
+                            <tr>
+                                <td>Sub Total</td>
+                                <td id="previewSubtotal">₹0.00</td>
+                            </tr>
+                            <tr>
+                                <td>Round Off</td>
+                                <td id="previewRoundOff">₹0.00</td>
+                            </tr>
+                            <tr>
+                                <td>GRAND TOTAL</td>
+                                <td id="previewGrandTotal">₹0.00</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="amount-in-words">
+                        <strong>Amount in Words:</strong> <span id="amountInWords">Zero Rupees Only</span>
+                    </div>
+                    
+                    <div class="invoice-footer">
+                        <div class="signature">
+                            <p>For SIVALINGAM & CO.</p>
+                            <img id="signatureImage" class="signature-img" alt="Authorized Signature" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANsAAAA5CAYAAAC/D17JAAAACXBIWXMAAC4jAAAuIwF4pT92AAAGWmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgOS4xLWMwMDMgNzkuOTY5MGE4NywgMjAyNS8wMy8wNi0xOToxMjowMyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIgeG1sbnM6cGhvdG9zaG9wPSJodHRwOi8vbnMuYWRvYmUuY29tL3Bob3Rvc2hvcC8xLjAvIiB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIDI2LjExIChXaW5kb3dzKSIgeG1wOkNyZWF0ZURhdGU9IjIwMjUtMTEtMTZUMjE6MTg6MTQrMDU6MzAiIHhtcDpNZXRhZGF0YURhdGU9IjIwMjUtMTEtMTZUMjE6MTg6MTQrMDU6MzAiIHhtcDpNb2RpZnlEYXRlPSIyMDI1LTExLTE2VDIxOjE4OjE0KzA1OjMwIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjMyYWExYTM2LTM0YzAtOTA0YS05YzdiLWViYjA5MGI3ZjZkZCIgeG1wTU06RG9jdW1lbnRJRD0iYWRvYmU6ZG9jaWQ6cGhvdG9zaG9wOjg2OTRhNGYwLTQxYTItNjY0OC1iZTU1LWM1ZWIyNDg5YWZiMiIgeG1wTU06T3JpZ2luYWxEb2N1bWVudElEPSJ4bXAuZGlkOjU0NTc2Y2M2LTY1MjctNWY0ZS1iMDJmLTEwYTQ4NTkyZGJlZiIgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIgZGM6Zm9ybWF0PSJpbWFnZS9wbmciPiA8eG1wTU06SGlzdG9yeT4gPHJkZjpTZXE+IDxyZGY6bGkgc3RFdnQ6YWN0aW9uPSJjcmVhdGVkIiBzdEV2dDppbnN0YW5jZUlEPSJ4bXAuaWlkOjU0NTc2Y2M2LTY1MjctNWY0ZS1iMDJmLTEwYTQ4NTkyZGJlZiIgc3RFdnQ6d2hlbj0iMjAyNS0xMS0xNlQyMToxODoxNCswNTozMCIgc3RFdnQ6c29mdHdhcmVBZ2VudD0iQWRvYmUgUGhvdG9zaG9wIDI2LjExIChXaW5kb3dzKSIvPiA8cmRmOmxpIHN0RXZ0OmFjdGlvbj0ic2F2ZWQiIHN0RXZ0Omluc3RhbmNlSUQ9InhtcC5paWQ6MzJhYTFhMzYtMzRjMC05MDRhLTljN2ItZWJiMDkwYjdmNmRkIiBzdEV2dDp3aGVuPSIyMDI1LTExLTE2VDIxOjE4OjE0KzA1OjMwIiBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZG9iZSBQaG90b3Nob3AgMjYuMTEgKFdpbmRvd3MpIiBzdEV2dDpjaGFuZ2VkPSIvIi8+IDwvcmRmOlNlcT4gPC94bXBNTTpIaXN0b3J5PiA8cGhvdG9zaG9wOlRleHRMYXllcnM+IDxyZGY6QmFnPiA8cmRmOmxpIHBob3Rvc2hvcDpMYXllck5hbWU9IkQuUGVydW1hbCIgcGhvdG9zaG9wOkxheWVyVGV4dD0iRC5QZXJ1bWFsIi8+IDwvcmRmOkJhZz4gPC9waG90b3Nob3A6VGV4dExheWVycz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz4t9DPMAAAHrUlEQVR42u1dC5WkOhBdC7EQC1jAAhawEAtYiAUsxAIWsIAF3vTbyuztNNB8EqhA7Tl1dnqmG+gkt/6fP+M4/hES2ko//5ofsj/U/dA4Qe0PGVkrWDNZBKGV4CoJXAOBydHrF+ngvTW8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" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="signature-placeholder">Signature will appear here</div>
+                            <br>
+                            <p>Authorized Signatory</p>
+                        </div>
+                    </div>
+                    
+                    <div class="computer-generated">
+                        <p>This is a computer-generated invoice.</p>
+                    </div>
+                </div>
             </div>
         </div>
-    </main>
-
-    <!-- Footer Section -->
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <p class="copyright">&copy; 2025 Billing Soft v1. All rights reserved.</p>
-                <p class="copyright">Developed by S Lab</p>
-            </div>
-        </div>
-    </footer>
+    </div>
 
     <script>
-        // Constants for API configuration
-        const BIN_ID = '690b6c3143b1c97be99ad21a';
-        const API_KEY = '$2a$10$4YO2j/sfX.tVtJ.qy7g7OeKvOhdNXJKd.IzwhkTslv1OdA71hBF6O';
-        const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
-        const VALID_PASSWORD = 'adminpass';
-
-        // DOM Elements
-        const loginForm = document.getElementById('login-form');
-        const passwordInput = document.getElementById('password');
-        const togglePasswordBtn = document.getElementById('toggle-password');
-        const loginBtn = document.getElementById('login-btn');
-        const messageContainer = document.getElementById('message-container');
-
-        /**
-         * Toggle password visibility
-         */
-        togglePasswordBtn.addEventListener('click', function() {
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            this.textContent = type === 'password' ? 'Show' : 'Hide';
-        });
-
-        /**
-         * Display message to user
-         * @param {string} message - The message to display
-         * @param {string} type - The type of message ('error' or 'success')
-         */
-        function showMessage(message, type) {
-            messageContainer.textContent = message;
-            messageContainer.className = 'message';
+        document.addEventListener('DOMContentLoaded', function() {
+            const addItemBtn = document.getElementById('addItem');
+            const itemsContainer = document.getElementById('itemsContainer');
+            const generateInvoiceBtn = document.getElementById('generateInvoice');
+            const downloadPDFBtn = document.getElementById('downloadPDF');
+            const resetFormBtn = document.getElementById('resetForm');
+            const invoicePreview = document.getElementById('invoicePreview');
+            const signatureImage = document.getElementById('signatureImage');
             
-            if (type === 'error') {
-                messageContainer.classList.add('error-message');
-            } else if (type === 'success') {
-                messageContainer.classList.add('success-message');
+            let itemCount = 1;
+            
+            // Indian number system formatter
+            function formatIndianNumber(num) {
+                const numStr = num.toString();
+                let result = '';
+                let count = 0;
+                
+                for (let i = numStr.length - 1; i >= 0; i--) {
+                    result = numStr[i] + result;
+                    count++;
+                    
+                    if (count === 3 && i !== 0) {
+                        result = ',' + result;
+                        count = 0;
+                    } else if (count === 2 && i !== 0 && numStr.length > 3) {
+                        result = ',' + result;
+                    }
+                }
+                
+                return result;
             }
             
-            messageContainer.classList.remove('hidden');
-            
-            // Auto-hide success messages after 3 seconds
-            if (type === 'success') {
-                setTimeout(() => {
-                    messageContainer.classList.add('hidden');
-                }, 3000);
+            // Format currency with Indian system
+            function formatCurrency(amount) {
+                const num = parseFloat(amount);
+                if (isNaN(num)) return '₹0.00';
+                const [integerPart, decimalPart] = num.toFixed(2).split('.');
+                return '₹' + formatIndianNumber(integerPart) + '.' + decimalPart;
             }
-        }
-
-        /**
-         * Record login activity to JSONBin
-         * @param {string} status - The status of the login attempt ('success' or 'failure')
-         * @param {string} message - Additional message about the login attempt
-         */
-        async function recordLoginActivity(status, message) {
-            try {
-                // Get current data from JSONBin
-                const response = await fetch(API_URL + '/latest', {
-                    method: 'GET',
-                    headers: {
-                        'X-Master-Key': API_KEY
+            
+            // Number to words converter for Indian numbering system
+            function numberToWords(num) {
+                const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 
+                          'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+                const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+                
+                if ((num = num.toString()).length > 9) return 'Overflow';
+                
+                const n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+                if (!n) return;
+                
+                let str = '';
+                str += n[1] != 0 ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + ' Crore ' : '';
+                str += n[2] != 0 ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + ' Lakh ' : '';
+                str += n[3] != 0 ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + ' Thousand ' : '';
+                str += n[4] != 0 ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + ' Hundred ' : '';
+                str += n[5] != 0 ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) + ' Rupees Only' : ((str != '') ? 'Rupees Only' : 'Zero Rupees Only');
+                
+                return str;
+            }
+            
+            // Add new item row
+            addItemBtn.addEventListener('click', function() {
+                itemCount++;
+                const itemRow = document.createElement('div');
+                itemRow.className = 'item-row';
+                itemRow.innerHTML = `
+                    <input type="text" placeholder="S.No" class="item-sno" value="${itemCount}">
+                    <input type="text" placeholder="Description of Goods" class="item-desc">
+                    <input type="number" placeholder="Quantity" class="item-qty">
+                    <input type="number" placeholder="Rate" class="item-rate">
+                    <input type="number" placeholder="Amount" class="item-amount" readonly>
+                `;
+                itemsContainer.appendChild(itemRow);
+                
+                // Add event listeners to calculate amount
+                const qtyInput = itemRow.querySelector('.item-qty');
+                const rateInput = itemRow.querySelector('.item-rate');
+                const amountInput = itemRow.querySelector('.item-amount');
+                
+                qtyInput.addEventListener('input', calculateItemAmount);
+                rateInput.addEventListener('input', calculateItemAmount);
+            });
+            
+            // Calculate item amount
+            function calculateItemAmount(e) {
+                const itemRow = e.target.closest('.item-row');
+                const qty = parseFloat(itemRow.querySelector('.item-qty').value) || 0;
+                const rate = parseFloat(itemRow.querySelector('.item-rate').value) || 0;
+                const amount = qty * rate;
+                itemRow.querySelector('.item-amount').value = amount.toFixed(2);
+            }
+            
+            // Add event listeners to existing item rows
+            document.querySelectorAll('.item-qty, .item-rate').forEach(input => {
+                input.addEventListener('input', calculateItemAmount);
+            });
+            
+            // Generate invoice preview
+            generateInvoiceBtn.addEventListener('click', function() {
+                // Get form values
+                const invoiceNo = document.getElementById('invoiceNo').value;
+                const invoiceDate = document.getElementById('invoiceDate').value;
+                const receiverName = document.getElementById('receiverName').value;
+                const receiverAddress = document.getElementById('receiverAddress').value;
+                const receiverMobile = document.getElementById('receiverMobile').value;
+                const roundOff = parseFloat(document.getElementById('roundOff').value) || 0;
+                
+                // Update preview with form values
+                document.getElementById('previewInvoiceNo').textContent = invoiceNo;
+                document.getElementById('previewInvoiceDate').textContent = invoiceDate;
+                document.getElementById('previewReceiverName').textContent = receiverName;
+                document.getElementById('previewReceiverAddress').textContent = receiverAddress;
+                document.getElementById('previewReceiverMobile').textContent = receiverMobile;
+                
+                // Update items table
+                const itemsTableBody = document.getElementById('previewItems');
+                itemsTableBody.innerHTML = '';
+                
+                let subtotal = 0;
+                document.querySelectorAll('.item-row').forEach(row => {
+                    const sno = row.querySelector('.item-sno').value;
+                    const desc = row.querySelector('.item-desc').value;
+                    const qty = row.querySelector('.item-qty').value;
+                    const rate = row.querySelector('.item-rate').value;
+                    const amount = parseFloat(row.querySelector('.item-amount').value) || 0;
+                    
+                    if (desc) {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${sno}</td>
+                            <td>${desc}</td>
+                            <td>${formatIndianNumber(qty)}</td>
+                            <td>${formatCurrency(rate)}</td>
+                            <td>${formatCurrency(amount)}</td>
+                        `;
+                        itemsTableBody.appendChild(tr);
+                        subtotal += amount;
                     }
                 });
                 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch data from JSONBin');
-                }
+                // Calculate totals
+                const grandTotal = subtotal + roundOff;
                 
-                const data = await response.json();
+                // Update totals in preview
+                document.getElementById('previewSubtotal').textContent = formatCurrency(subtotal);
+                document.getElementById('previewRoundOff').textContent = formatCurrency(roundOff);
+                document.getElementById('previewGrandTotal').textContent = formatCurrency(grandTotal);
                 
-                // Create new activity record
-                const newActivity = {
-                    timestamp: new Date().toISOString(),
-                    status: status,
-                    message: message
-                };
+                // Update amount in words
+                document.getElementById('amountInWords').textContent = numberToWords(Math.round(grandTotal));
                 
-                // Update activities array
-                const updatedActivities = data.record.activities ? 
-                    [...data.record.activities, newActivity] : [newActivity];
-                
-                // Update the bin with new data
-                const updateResponse = await fetch(API_URL, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': API_KEY
-                    },
-                    body: JSON.stringify({
-                        ...data.record,
-                        activities: updatedActivities
-                    })
-                });
-                
-                if (!updateResponse.ok) {
-                    throw new Error('Failed to update JSONBin');
-                }
-                
-                console.log('Login activity recorded successfully');
-            } catch (error) {
-                console.error('Error recording login activity:', error);
-                // We don't show this error to the user to maintain UX
-            }
-        }
-
-        /**
-         * Handle form submission
-         * @param {Event} event - The form submission event
-         */
-        async function handleLogin(event) {
-            event.preventDefault();
-            
-            // Get password value
-            const password = passwordInput.value;
-            
-            // Validate password
-            if (!password) {
-                showMessage('Please enter a password', 'error');
-                passwordInput.focus();
-                return;
-            }
-            
-            // Show loading state
-            loginBtn.textContent = 'Authenticating...';
-            loginBtn.disabled = true;
-            
-            try {
-                // Validate password
-                if (password === VALID_PASSWORD) {
-                    // Record successful login
-                    await recordLoginActivity('success', 'User authenticated successfully');
-                    
-                    // Show success message
-                    showMessage('Login successful! Redirecting to dashboard...', 'success');
-                    
-                    // Redirect to dashboard after a short delay
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 1500);
-                } else {
-                    // Record failed login
-                    await recordLoginActivity('failure', 'Invalid password provided');
-                    
-                    // Show error message
-                    showMessage('Invalid password. Please try again.', 'error');
-                    passwordInput.focus();
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                showMessage('An error occurred during authentication. Please try again.', 'error');
-            } finally {
-                // Reset button state
-                loginBtn.textContent = 'Sign In';
-                loginBtn.disabled = false;
-            }
-        }
-
-        // Add event listener for form submission
-        loginForm.addEventListener('submit', handleLogin);
-
-        // Add focus styling to form inputs
-        const formInputs = document.querySelectorAll('.form-input');
-        formInputs.forEach(input => {
-            input.addEventListener('focus', function() {
-                this.parentElement.classList.add('focused');
+                // Show preview
+                invoicePreview.classList.remove('hidden');
             });
             
-            input.addEventListener('blur', function() {
-                this.parentElement.classList.remove('focused');
+            // Download PDF
+            downloadPDFBtn.addEventListener('click', function() {
+                if (invoicePreview.classList.contains('hidden')) {
+                    alert('Please generate invoice first by clicking the "Generate Invoice" button.');
+                    return;
+                }
+                
+                // Show loading message
+                const originalText = downloadPDFBtn.textContent;
+                downloadPDFBtn.textContent = 'Generating PDF...';
+                downloadPDFBtn.disabled = true;
+                
+                const { jsPDF } = window.jspdf;
+                
+                // Create a temporary container
+                const tempContainer = document.createElement('div');
+                tempContainer.style.position = 'absolute';
+                tempContainer.style.left = '-9999px';
+                tempContainer.style.width = '794px';
+                tempContainer.style.backgroundColor = 'white';
+                tempContainer.innerHTML = invoicePreview.innerHTML;
+                document.body.appendChild(tempContainer);
+                
+                html2canvas(tempContainer, {
+                    scale: 1.5,
+                    logging: false,
+                    useCORS: false,
+                    allowTaint: false,
+                    backgroundColor: '#ffffff',
+                    width: 794,
+                    windowWidth: 794
+                }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/jpeg', 0.85);
+                    const pdf = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'a4',
+                        compress: true
+                    });
+                    
+                    // Set margins (15mm on all sides)
+                    const pageWidth = 210; // A4 width in mm
+                    const pageHeight = 297; // A4 height in mm
+                    const margin = 15; // 15mm margin
+                    const contentWidth = pageWidth - (margin * 2);
+                    const contentHeight = pageHeight - (margin * 2);
+                    
+                    // Calculate image dimensions to fit within margins
+                    const imgWidth = contentWidth;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    
+                    // Calculate how many pages we need
+                    const totalPages = Math.ceil(imgHeight / contentHeight);
+                    
+                    // Add pages with content
+                    for (let i = 0; i < totalPages; i++) {
+                        if (i > 0) {
+                            pdf.addPage();
+                        }
+                        
+                        // Calculate position for this page
+                        const yPosition = -(i * contentHeight);
+                        
+                        // Add image (part of it for this page)
+                        pdf.addImage(
+                            imgData, 
+                            'JPEG', 
+                            margin, 
+                            margin + yPosition, 
+                            imgWidth, 
+                            imgHeight
+                        );
+                    }
+                    
+                    // Clean up
+                    document.body.removeChild(tempContainer);
+                    
+                    // Save PDF
+                    pdf.save('invoice.pdf');
+                    
+                    // Restore button
+                    downloadPDFBtn.textContent = originalText;
+                    downloadPDFBtn.disabled = false;
+                }).catch(error => {
+                    console.error('Error generating PDF:', error);
+                    if (document.body.contains(tempContainer)) {
+                        document.body.removeChild(tempContainer);
+                    }
+                    downloadPDFBtn.textContent = originalText;
+                    downloadPDFBtn.disabled = false;
+                    alert('Error generating PDF. Please try again.');
+                });
+            });
+            
+            // Reset form
+            resetFormBtn.addEventListener('click', function() {
+                document.getElementById('invoiceNo').value = '';
+                document.getElementById('invoiceDate').value = '';
+                document.getElementById('receiverName').value = '';
+                document.getElementById('receiverAddress').value = '';
+                document.getElementById('receiverMobile').value = '';
+                document.getElementById('roundOff').value = '0';
+                
+                // Reset items to just one row
+                itemsContainer.innerHTML = `
+                    <div class="item-row">
+                        <input type="text" placeholder="S.No" class="item-sno" value="1">
+                        <input type="text" placeholder="Description of Goods" class="item-desc">
+                        <input type="number" placeholder="Quantity" class="item-qty">
+                        <input type="number" placeholder="Rate" class="item-rate">
+                        <input type="number" placeholder="Amount" class="item-amount" readonly>
+                    </div>
+                `;
+                
+                // Add event listeners to new row
+                document.querySelectorAll('.item-qty, .item-rate').forEach(input => {
+                    input.addEventListener('input', calculateItemAmount);
+                });
+                
+                // Hide preview
+                invoicePreview.classList.add('hidden');
+                
+                // Reset item count
+                itemCount = 1;
             });
         });
     </script>

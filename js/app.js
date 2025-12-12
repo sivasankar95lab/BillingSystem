@@ -27,23 +27,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const signaturePlaceholder = document.getElementById('signaturePlaceholder');
 
     // Toggle Inputs
-    document.querySelectorAll('input[name="logoOption"]').forEach(el => {
-        el.addEventListener('change', (e) => {
-            if (e.target.value === 'upload') {
-                document.getElementById('logoUploadInput').classList.remove('d-none');
-                document.getElementById('logoUrlInput').classList.add('d-none');
-            } else {
-                document.getElementById('logoUploadInput').classList.add('d-none');
-                document.getElementById('logoUrlInput').classList.remove('d-none');
-            }
-        });
-    });
+    // Logo Option - Only URL exists effectively, masking this
+    // If you want to keep the listener in case of future expansion, ensure elements exist.
+    // For now, simpler to remove the toggle logic if only 1 option or just remove reference to missing ID.
 
     document.querySelectorAll('input[name="signatureOption"]').forEach(el => {
         el.addEventListener('change', (e) => {
             const val = e.target.value;
             document.getElementById('sigDrawInput').classList.toggle('d-none', val !== 'draw');
-            document.getElementById('sigUploadInput').classList.toggle('d-none', val !== 'upload');
             document.getElementById('sigUrlInput').classList.toggle('d-none', val !== 'url');
         });
     });
@@ -53,34 +44,43 @@ document.addEventListener('DOMContentLoaded', () => {
     signatureUrl.addEventListener('input', (e) => {
         const url = e.target.value;
         if (url) {
-            // Basic Check or direct assignment. 
-            // Note: external images might have CORS issues in PDF generation unless handled.
-            // But for now, we just set it.
-            // Converting to Base64 (like logo) is safer.
             convertImgToBase64(url, (base64) => {
                 state.signatureImage = base64;
                 document.getElementById('signatureUrlPreview').src = base64;
                 document.getElementById('signatureUrlPreview').style.display = 'block';
                 document.getElementById('signatureUrlPlaceholder').style.display = 'none';
             });
+        } else {
+            state.signatureImage = null;
+            document.getElementById('signatureUrlPreview').style.display = 'none';
+            document.getElementById('signatureUrlPlaceholder').style.display = 'block';
         }
     });
 
-    // Logo Handling
-    logoFile.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function (evt) {
-                state.logoImage = evt.target.result;
-                logoPreview.src = state.logoImage;
+    // Clear Signature URL
+    document.getElementById('clearSigUrlBtn').addEventListener('click', () => {
+        signatureUrl.value = '';
+        state.signatureImage = null;
+        document.getElementById('signatureUrlPreview').style.display = 'none';
+        document.getElementById('signatureUrlPreview').src = '';
+        document.getElementById('signatureUrlPlaceholder').style.display = 'block';
+    });
+
+    // Logo URL Input - Auto Load
+    logoUrl.addEventListener('input', (e) => {
+        const url = e.target.value;
+        if (url) {
+            convertImgToBase64(url, (base64) => {
+                state.logoImage = base64;
+                logoPreview.src = base64;
                 logoPreview.style.display = 'block';
                 logoPlaceholder.style.display = 'none';
-            };
-            reader.readAsDataURL(file);
+            });
         }
     });
 
+    // Check if previewLogoUrlBtn exists before adding listener if needed, 
+    // but assuming it does based on previous logic.
     previewLogoUrlBtn.addEventListener('click', () => {
         const url = logoUrl.value;
         if (url) {
@@ -94,20 +94,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Signature Upload
-    signatureFile.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function (evt) {
-                state.signatureImage = evt.target.result;
-                signaturePreview.src = state.signatureImage;
-                signaturePreview.style.display = 'block';
-                signaturePlaceholder.style.display = 'none';
-            };
-            reader.readAsDataURL(file);
-        }
+    // Clear Logo URL
+    document.getElementById('clearLogoUrlBtn').addEventListener('click', () => {
+        logoUrl.value = '';
+        state.logoImage = null;
+        logoPreview.style.display = 'none';
+        logoPreview.src = '';
+        logoPlaceholder.style.display = 'block';
     });
+
+
 
     // Signature Canvas
     const ctx = signatureCanvas.getContext('2d');
@@ -288,43 +284,36 @@ document.addEventListener('DOMContentLoaded', () => {
             const total = taxable + taxAmt;
 
             tr.innerHTML = `
-                <td>
-                    <input type="text" class="form-control" placeholder="Item Name" 
-                        value="${item.name}" 
-                        oninput="updateItemData(${item.id}, 'name', this.value)">
-                </td>
-                <td>
-                    <input type="text" class="form-control" placeholder="HSN" 
-                        value="${item.hsn}" 
-                        oninput="updateItemData(${item.id}, 'hsn', this.value)">
-                </td>
-                <td>
-                    <input type="number" class="form-control" placeholder="0" min="1" 
-                        value="${item.qty}" 
-                        oninput="updateItemData(${item.id}, 'qty', parseFloat(this.value))">
-                </td>
-                <td>
-                    <input type="number" class="form-control" placeholder="0.00" min="0" 
-                        value="${item.rate}" 
-                        oninput="updateItemData(${item.id}, 'rate', parseFloat(this.value))">
-                </td>
-                <td>
-                    <select class="form-select" 
-                        onchange="updateItemData(${item.id}, 'gst', parseFloat(this.value))">
-                        <option value="0" ${item.gst === 0 ? 'selected' : ''}>0%</option>
-                        <option value="5" ${item.gst === 5 ? 'selected' : ''}>5%</option>
-                        <option value="12" ${item.gst === 12 ? 'selected' : ''}>12%</option>
-                        <option value="18" ${item.gst === 18 ? 'selected' : ''}>18%</option>
-                        <option value="28" ${item.gst === 28 ? 'selected' : ''}>28%</option>
-                    </select>
-                </td>
-                <td class="text-end pe-4 fw-medium row-amount">${total.toFixed(2)}</td>
-                <td class="text-center">
-                    <button type="button" class="delete-row-btn" onclick="deleteItem(${item.id})" title="Remove Item">
-                        <i class="fas fa-times"></i>
+            <td>
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" placeholder="Item Name" value="${item.name}" 
+                        list="itemList"
+                        oninput="updateItemData(${item.id}, 'name', this.value)"
+                        onchange="checkAndAutoFill(${item.id}, this)">
+                    <button class="btn btn-outline-secondary" type="button" onclick="openItemModalForSelection(${item.id})" title="Pick from List">
+                        <i class="fas fa-list"></i>
                     </button>
-                </td>
-            `;
+                </div>
+            </td>
+            <td><input type="text" class="form-control form-control-sm" placeholder="HSN" value="${item.hsn}" oninput="updateItemData(${item.id}, 'hsn', this.value)"></td>
+            <td><input type="number" class="form-control form-control-sm" placeholder="Qty" value="${item.qty}" oninput="updateItemData(${item.id}, 'qty', parseFloat(this.value))"></td>
+            <td><input type="number" class="form-control form-control-sm" placeholder="Rate" value="${item.rate}" oninput="updateItemData(${item.id}, 'rate', parseFloat(this.value))"></td>
+            <td>
+                <select class="form-select form-select-sm" onchange="updateItemData(${item.id}, 'gst', parseFloat(this.value))">
+                    <option value="0" ${item.gst === 0 ? 'selected' : ''}>0%</option>
+                    <option value="5" ${item.gst === 5 ? 'selected' : ''}>5%</option>
+                    <option value="12" ${item.gst === 12 ? 'selected' : ''}>12%</option>
+                    <option value="18" ${item.gst === 18 ? 'selected' : ''}>18%</option>
+                    <option value="28" ${item.gst === 28 ? 'selected' : ''}>28%</option>
+                </select>
+            </td>
+            <td class="text-end pe-4 fw-medium row-amount">${total.toFixed(2)}</td>
+            <td class="text-center">
+                <button type="button" class="delete-row-btn" onclick="deleteItem(${item.id})" title="Remove Item">
+                    <i class="fas fa-times"></i>
+                </button>
+            </td>
+        `;
             itemsBody.appendChild(tr);
         });
     }
@@ -433,7 +422,9 @@ document.addEventListener('DOMContentLoaded', () => {
         signaturePlaceholder.style.display = 'block';
         document.getElementById('signatureUrlPreview').style.display = 'none';
         document.getElementById('signatureUrlPlaceholder').style.display = 'block';
+        document.getElementById('signatureUrlPlaceholder').style.display = 'block';
         ctx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+        document.getElementById('invoiceNote').value = '';
 
         // Retrigger Toggles checks (to ensure correct inputs are shown)
         const logoOpt = document.querySelector('input[name="logoOption"]:checked');
@@ -467,6 +458,10 @@ document.addEventListener('DOMContentLoaded', () => {
         generateDeliveryChallan(gatherData());
     });
 
+    document.getElementById('btnQuote').addEventListener('click', () => {
+        generateQuote(gatherData());
+    });
+
     function gatherData() {
         const totals = state.totals || { subtotal: 0, discount: 0, cgst: 0, sgst: 0, igst: 0, total: 0 };
         return {
@@ -490,7 +485,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 bankName: document.getElementById('bankName').value,
                 accountNumber: document.getElementById('accountNumber').value,
                 ifscCode: document.getElementById('ifscCode').value,
-                upiId: document.getElementById('upiId').value
+                accountNumber: document.getElementById('accountNumber').value,
+                ifscCode: document.getElementById('ifscCode').value,
+                upiId: document.getElementById('upiId').value,
+                note: document.getElementById('invoiceNote').value
             },
             items: state.items,
             totals: totals,
@@ -526,4 +524,816 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return str + ' Only';
     }
+    // Profile Manager Implementation
+    const ProfileManager = {
+        currentType: 'company',
+        profiles: [],
+
+        init() {
+            this.modal = new bootstrap.Modal(document.getElementById('profileModal'));
+            document.getElementById('addProfileRowBtn').addEventListener('click', () => this.addRow());
+        },
+
+        open(type) {
+            this.currentType = type;
+            let title = 'Manage Profiles';
+            if (type === 'company') title = 'Manage Company Profiles';
+            else if (type === 'client') title = 'Manage Client Profiles';
+            else if (type === 'payment') title = 'Manage Payment Details';
+
+            document.getElementById('profileModalTitle').textContent = title;
+            this.loadProfiles();
+            this.renderTable();
+            this.modal.show();
+        },
+
+        loadProfiles() {
+            let key = 'invoice_profiles_company';
+            if (this.currentType === 'client') key = 'invoice_profiles_client';
+            if (this.currentType === 'payment') key = 'invoice_profiles_payment';
+
+            const data = localStorage.getItem(key);
+            this.profiles = data ? JSON.parse(data) : [];
+        },
+
+        loadDefaults() {
+            // Load Company Default
+            const companyData = localStorage.getItem('invoice_profiles_company');
+            if (companyData) {
+                const profiles = JSON.parse(companyData);
+                if (profiles.length > 0) {
+                    this.currentType = 'company';
+                    this.profiles = profiles;
+                    this.useProfile(0);
+                }
+            }
+            // Load Client Default (optional, maybe user doesn't want client pre-filled?)
+            // User said "use top profile values", implies generic preferences. 
+            // Usually Company is static, Client varies. But let's follow instruction "top profile values".
+            const clientData = localStorage.getItem('invoice_profiles_client');
+            if (clientData) {
+                const profiles = JSON.parse(clientData);
+                if (profiles.length > 0) {
+                    this.currentType = 'client';
+                    this.profiles = profiles;
+                    this.useProfile(0);
+                }
+            }
+
+            // Load Payment Default
+            const paymentData = localStorage.getItem('invoice_profiles_payment');
+            if (paymentData) {
+                const profiles = JSON.parse(paymentData);
+                if (profiles.length > 0) {
+                    this.currentType = 'payment';
+                    this.profiles = profiles;
+                    this.useProfile(0);
+                }
+            }
+        },
+
+        saveProfiles() {
+            let key = 'invoice_profiles_company';
+            if (this.currentType === 'client') key = 'invoice_profiles_client';
+            if (this.currentType === 'payment') key = 'invoice_profiles_payment';
+
+            localStorage.setItem(key, JSON.stringify(this.profiles));
+        },
+
+        fields() {
+            switch (this.currentType) {
+                case 'company':
+                    return [
+                        { key: 'companyName', label: 'Company Name', id: 'companyName' },
+                        { key: 'companyAddress', label: 'Address', id: 'companyAddress' },
+                        { key: 'companyGstin', label: 'GSTIN', id: 'companyGst' },
+                        { key: 'companyPhone', label: 'Phone', id: 'companyPhone' },
+                        { key: 'companyEmail', label: 'Email', id: 'companyEmail' },
+                        { key: 'logoUrl', label: 'Logo URL', id: 'logoUrl' },
+                        { key: 'signatureUrl', label: 'Signature URL', id: 'signatureUrl' }
+                    ];
+                case 'client':
+                    return [
+                        { key: 'clientName', label: 'Client Name', id: 'clientName' },
+                        { key: 'clientAddress', label: 'Address', id: 'clientAddress' },
+                        { key: 'clientGstin', label: 'GSTIN', id: 'clientGst' },
+                        { key: 'clientPhone', label: 'Phone', id: 'clientPhone' },
+                        { key: 'clientEmail', label: 'Email', id: 'clientEmail' },
+                        { key: 'clientNotes', label: 'Notes', id: 'clientNotes' },
+                        { key: 'state', label: 'State', id: 'clientState', options: ['Same State', 'Inter State'] }
+                    ];
+                case 'payment':
+                    return [
+                        { key: 'accountName', label: 'Account Name', id: 'accountName' },
+                        { key: 'bankName', label: 'Bank Name - Branch', id: 'bankName' },
+                        { key: 'accountNumber', label: 'Account No', id: 'accountNumber' },
+                        { key: 'ifscCode', label: 'IFSC', id: 'ifscCode' },
+                        { key: 'upiId', label: 'UPI ID', id: 'upiId' }
+                    ];
+                default: return [];
+            }
+        },
+
+        autoSaveClient() {
+            const clientName = document.getElementById('clientName').value;
+            if (!clientName) return; // Don't save empty names
+
+            // Retrieve current client profiles without changing global state excessively
+            const key = 'invoice_profiles_client';
+            const data = localStorage.getItem(key);
+            let profiles = data ? JSON.parse(data) : [];
+
+            // Check if exists
+            const existingIndex = profiles.findIndex(p => p.clientName === clientName);
+
+            const currentProfile = {
+                clientName: clientName,
+                clientAddress: document.getElementById('clientAddress').value,
+                clientGstin: document.getElementById('clientGst').value,
+                clientPhone: document.getElementById('clientPhone').value,
+                clientEmail: document.getElementById('clientEmail').value,
+                clientNotes: document.getElementById('clientNotes').value,
+                state: document.getElementById('clientState').value
+            };
+
+            if (existingIndex !== -1) {
+                // Update existing
+                profiles[existingIndex] = currentProfile;
+            } else {
+                // Add new
+                profiles.push(currentProfile);
+            }
+
+            localStorage.setItem(key, JSON.stringify(profiles));
+            // If the modal is open and showing clients, refresh it? 
+            // Better not to disturb UI flux too much unless needed.
+        },
+
+        moveProfile(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= this.profiles.length) return;
+
+            // Swap
+            [this.profiles[index], this.profiles[newIndex]] = [this.profiles[newIndex], this.profiles[index]];
+            this.saveProfiles();
+            this.renderTable();
+        },
+
+        renderTable() {
+            const fields = this.fields();
+            const thead = document.getElementById('profileTableHeader');
+            const tbody = document.getElementById('profileTableBody');
+            const emptyState = document.getElementById('profileEmptyState');
+
+            // Header
+            thead.innerHTML = '';
+            fields.forEach(f => {
+                const th = document.createElement('th');
+                th.textContent = f.label;
+                thead.appendChild(th);
+            });
+            thead.innerHTML += '<th style="width: 150px;">Actions</th>';
+
+            // Body
+            tbody.innerHTML = '';
+            if (this.profiles.length === 0) {
+                emptyState.classList.remove('d-none');
+            } else {
+                emptyState.classList.add('d-none');
+                this.profiles.forEach((profile, index) => {
+                    const tr = document.createElement('tr');
+                    fields.forEach(f => {
+                        const td = document.createElement('td');
+                        if (f.key === 'state') {
+                            // Select for state
+                            const select = document.createElement('select');
+                            select.className = 'form-select form-select-sm border-0 bg-transparent';
+                            f.options.forEach(opt => {
+                                const option = document.createElement('option');
+                                option.value = opt;
+                                option.textContent = opt === 'Same State' ? 'Intra-State' : 'Inter-State';
+                                if (opt === profile[f.key]) option.selected = true;
+                                select.appendChild(option);
+                            });
+                            select.addEventListener('change', (e) => this.updateField(index, f.key, e.target.value));
+                            td.appendChild(select);
+                        } else {
+                            // Text Input
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.className = 'form-control form-control-sm border-0 bg-transparent';
+                            input.value = profile[f.key] || '';
+                            input.placeholder = f.label;
+                            input.addEventListener('input', (e) => this.updateField(index, f.key, e.target.value));
+                            td.appendChild(input);
+                        }
+                        tr.appendChild(td);
+                    });
+
+                    // Reorder & Actions
+                    const actionTd = document.createElement('td');
+                    actionTd.style.whiteSpace = 'nowrap';
+                    actionTd.innerHTML = `
+                         <button class="btn btn-sm btn-outline-secondary me-1" onclick="moveProfile(${index}, -1)" title="Move Up" ${index === 0 ? 'disabled' : ''}>
+                            <i class="fas fa-arrow-up"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary me-1" onclick="moveProfile(${index}, 1)" title="Move Down" ${index === this.profiles.length - 1 ? 'disabled' : ''}>
+                            <i class="fas fa-arrow-down"></i>
+                        </button>
+                        <button class="btn btn-sm btn-success me-1" onclick="useProfile(${index})" title="Use">
+                            <i class="fas fa-check"></i> 
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteProfile(${index})" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                    tr.appendChild(actionTd);
+                    tbody.appendChild(tr);
+                });
+            }
+        },
+
+        addRow() {
+            const newProfile = {};
+            this.fields().forEach(f => newProfile[f.key] = f.key === 'state' ? 'Same State' : '');
+            this.profiles.push(newProfile);
+            this.saveProfiles();
+            this.renderTable();
+        },
+
+        updateField(index, key, value) {
+            this.profiles[index][key] = value;
+            this.saveProfiles();
+        },
+
+        deleteProfile(index) {
+            if (confirm('Delete this profile?')) {
+                this.profiles.splice(index, 1);
+                this.saveProfiles();
+                this.renderTable();
+            }
+        },
+
+        useProfile(index) {
+            const profile = this.profiles[index];
+            const fields = this.fields();
+            fields.forEach(f => {
+                const el = document.getElementById(f.id);
+                if (el) {
+                    el.value = profile[f.key];
+                    // Trigger change event for State select to update tax display
+                    if (f.key === 'state') el.dispatchEvent(new Event('change'));
+                    // Trigger input event for URLs to update previews
+                    if (f.key === 'logoUrl' || f.key === 'signatureUrl') el.dispatchEvent(new Event('input'));
+                }
+            });
+            this.modal.hide();
+        }
+    };
+
+    // Initialize Profile Logic
+    ProfileManager.init();
+    ProfileManager.loadDefaults();
+
+    // Expose global functions for HTML onclick
+    window.openProfileModal = (type) => ProfileManager.open(type);
+    window.deleteProfile = (index) => ProfileManager.deleteProfile(index);
+    window.useProfile = (index) => ProfileManager.useProfile(index);
+    window.moveProfile = (index, dir) => ProfileManager.moveProfile(index, dir);
+
+    // Auto-Save Listeners for Client Fields
+    ['clientName', 'clientAddress', 'clientGst', 'clientPhone', 'clientEmail', 'clientNotes', 'clientState'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('blur', () => ProfileManager.autoSaveClient());
+        }
+    });
+
+    // Item Manager Implementation
+    const ItemManager = {
+        items: [],
+        modal: null,
+        targetRowId: null,
+
+        init() {
+            this.modal = new bootstrap.Modal(document.getElementById('itemModal'));
+            this.loadItems();
+            this.updateDatalist();
+        },
+
+        loadItems() {
+            const data = localStorage.getItem('invoice_items_catalogue');
+            this.items = data ? JSON.parse(data) : [];
+        },
+
+        saveItems() {
+            localStorage.setItem('invoice_items_catalogue', JSON.stringify(this.items));
+            this.updateDatalist();
+        },
+
+        updateDatalist() {
+            const datalist = document.getElementById('itemList');
+            if (datalist) {
+                datalist.innerHTML = '';
+                this.items.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.name;
+                    datalist.appendChild(opt);
+                });
+            }
+        },
+
+        renderTable() {
+            const tbody = document.getElementById('itemTableBody');
+            const emptyState = document.getElementById('itemEmptyState');
+            tbody.innerHTML = '';
+
+            if (this.items.length === 0) {
+                emptyState.classList.remove('d-none');
+            } else {
+                emptyState.classList.add('d-none');
+                this.items.forEach((item, index) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><input type="text" class="form-control form-control-sm" value="${item.name}" onchange="ItemManager.updateField(${index}, 'name', this.value)"></td>
+                        <td><input type="text" class="form-control form-control-sm" value="${item.hsn}" onchange="ItemManager.updateField(${index}, 'hsn', this.value)"></td>
+                        <td><input type="number" class="form-control form-control-sm" value="${item.rate}" onchange="ItemManager.updateField(${index}, 'rate', parseFloat(this.value))"></td>
+                        <td><input type="number" class="form-control form-control-sm" value="${item.gst}" onchange="ItemManager.updateField(${index}, 'gst', parseFloat(this.value))"></td>
+                        <td>
+                            <button class="btn btn-sm btn-success me-1" onclick="ItemManager.useItem(${index})">
+                                <i class="fas fa-check"></i> Use
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="ItemManager.deleteItem(${index})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        },
+
+        updateField(index, key, value) {
+            this.items[index][key] = value;
+            this.saveItems();
+        },
+
+        deleteItem(index) {
+            if (confirm('Delete this item?')) {
+                this.items.splice(index, 1);
+                this.saveItems();
+                this.renderTable();
+            }
+        },
+
+        addRow() {
+            this.items.push({ name: '', hsn: '', rate: 0, gst: 18 });
+            this.saveItems();
+            this.renderTable();
+        },
+
+        open(targetId = null) {
+            this.targetRowId = targetId;
+            this.renderTable();
+            this.modal.show();
+        },
+
+        useItem(index) {
+            const item = this.items[index];
+            if (this.targetRowId) {
+                // Populate specific row
+                const rowItem = state.items.find(i => i.id === this.targetRowId);
+                if (rowItem) {
+                    rowItem.name = item.name;
+                    rowItem.hsn = item.hsn;
+                    rowItem.rate = item.rate;
+                    rowItem.gst = item.gst;
+                    // Trigger refresh
+                    renderItems();
+                    calculateTotals();
+                }
+            } else {
+                // Add as new row
+                const id = Date.now();
+                state.items.push({
+                    id,
+                    name: item.name,
+                    hsn: item.hsn,
+                    qty: 1,
+                    rate: item.rate,
+                    gst: item.gst
+                });
+                renderItems();
+                calculateTotals();
+            }
+            this.modal.hide();
+        },
+
+        // Auto Save Logic
+        checkAndSave(name, hsn, rate, gst) {
+            if (!name) return;
+            // Only save if we have a rate (implies "fully entered" somewhat)
+            if (!rate || rate <= 0) return;
+
+            // Check if exists
+            const exists = this.items.find(i => i.name.toLowerCase() === name.toLowerCase());
+            if (!exists) {
+                this.items.push({ name, hsn: hsn || '', rate: rate, gst: gst || 18 });
+                this.saveItems();
+                console.log('Auto-saved new item:', name);
+            }
+        }
+    };
+
+    // Initialize
+    ItemManager.init();
+
+    // Global Exposure
+    window.ItemManager = ItemManager;
+    window.openItemModal = () => ItemManager.open();
+    window.openItemModalForSelection = (id) => ItemManager.open(id);
+
+    // Auto-fill and Auto-save Handler
+    window.checkAndAutoFill = (id, input) => {
+        const val = input.value;
+        const item = ItemManager.items.find(i => i.name === val);
+        if (item) {
+            // Auto-fill
+            window.updateItemData(id, 'hsn', item.hsn);
+            window.updateItemData(id, 'rate', item.rate);
+            window.updateItemData(id, 'gst', item.gst);
+            // Re-render to show updated values
+            renderItems();
+            calculateTotals();
+        } else {
+            // It's a new item (or name changed)
+            const row = state.items.find(i => i.id === id);
+            if (row && row.name) {
+                ItemManager.checkAndSave(row.name, row.hsn, row.rate, row.gst);
+            }
+        }
+    };
+
+    // Hook into updateItemData to trigger auto-save on other fields changing too
+    const originalUpdate = window.updateItemData;
+    window.updateItemData = (id, field, value) => {
+        originalUpdate(id, field, value); // Call original
+        // Try auto-save if we have enough info
+        const row = state.items.find(i => i.id === id);
+        if (row && row.name && field !== 'qty') { // Don't save on qty change
+            ItemManager.checkAndSave(row.name, row.hsn, row.rate, row.gst);
+        }
+    };
+
+    // Invoice History & Management
+    const InvoiceManager = {
+        history: [],
+        modal: null,
+
+        init() {
+            this.modal = new bootstrap.Modal(document.getElementById('historyModal'));
+            this.loadHistory();
+        },
+
+        loadHistory() {
+            const data = localStorage.getItem('invoice_history');
+            this.history = data ? JSON.parse(data) : [];
+        },
+
+        saveHistory() {
+            try {
+                localStorage.setItem('invoice_history', JSON.stringify(this.history));
+            } catch (e) {
+                console.error('Storage failed:', e);
+                alert('Storage full! Could not save history. Please delete old invoices or use smaller images.');
+                // Remove the failed entry from memory so UI stays consistent
+                this.history.shift();
+            }
+        },
+
+        saveCurrent() {
+            const data = gatherData();
+
+            // Extend data with state that isn't in gatherData
+            const snapshot = {
+                id: Date.now(),
+                savedAt: new Date().toLocaleString(),
+                details: { ...data.details, logo: null, signature: null }, // Don't save base64 images to history/cloud to save space
+                items: JSON.parse(JSON.stringify(state.items)),
+                totals: data.totals,
+                settings: {
+                    taxType: state.taxType,
+                    companyName: document.getElementById('companyName').value,
+                    companyAddress: document.getElementById('companyAddress').value,
+                    companyGstin: document.getElementById('companyGst').value,
+                    companyPhone: document.getElementById('companyPhone').value,
+                    companyEmail: document.getElementById('companyEmail').value,
+                    logoUrl: document.getElementById('logoUrl').value,
+                    signatureUrl: document.getElementById('signatureUrl').value,
+
+                    clientName: document.getElementById('clientName').value,
+                    clientAddress: document.getElementById('clientAddress').value,
+                    clientGstin: document.getElementById('clientGst').value,
+                    clientPhone: document.getElementById('clientPhone').value,
+                    clientEmail: document.getElementById('clientEmail').value,
+                    clientNotes: document.getElementById('clientNotes').value,
+                    clientState: document.getElementById('clientState').value,
+
+                    transportMode: document.getElementById('transportMode').value,
+                    vehicleNumber: document.getElementById('vehicleNumber').value,
+
+                    bankName: document.getElementById('bankName').value,
+                    accountName: document.getElementById('accountName').value,
+                    accountNumber: document.getElementById('accountNumber').value,
+                    ifscCode: document.getElementById('ifscCode').value,
+                    upiId: document.getElementById('upiId').value,
+
+                    discountType: document.querySelector('input[name="discountType"]:checked').value,
+                    discountValue: document.getElementById('discountValue').value
+                }
+            };
+
+            // Check for duplicate Invoice Number
+            const existingIndex = this.history.findIndex(inv => inv.details.invoiceNumber === data.details.invoiceNumber);
+
+            if (existingIndex !== -1) {
+                if (confirm(`Invoice number "${data.details.invoiceNumber}" already exists in history. Do you want to overwrite it?`)) {
+                    // Update existing
+                    this.history[existingIndex] = snapshot;
+                    this.saveHistory();
+                    alert('Invoice updated successfully!');
+                }
+                // If they cancel, we do nothing (don't save)
+            } else {
+                // New Invoice
+                this.history.unshift(snapshot);
+                if (this.history.length > 50) this.history.pop();
+                this.saveHistory();
+                alert('Invoice saved successfully!');
+            }
+        },
+
+        openHistory() {
+            this.renderTable();
+            this.modal.show();
+        },
+
+        renderTable() {
+            const tbody = document.getElementById('historyTableBody');
+            const emptyState = document.getElementById('historyEmptyState');
+            tbody.innerHTML = '';
+
+            if (this.history.length === 0) {
+                emptyState.classList.remove('d-none');
+            } else {
+                emptyState.classList.add('d-none');
+                this.history.forEach((record, index) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${record.savedAt}</td>
+                        <td class="fw-bold">${record.details.invoiceNumber}</td>
+                        <td>${record.details.clientName || '-'}</td>
+                        <td>₹${record.totals.total.toFixed(2)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary me-1" onclick="InvoiceManager.load(${index})">
+                                <i class="fas fa-box-open"></i> Load
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="InvoiceManager.delete(${index})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        },
+
+        delete(index) {
+            if (confirm('Delete this saved invoice?')) {
+                this.history.splice(index, 1);
+                this.saveHistory();
+                this.renderTable();
+            }
+        },
+
+        load(index) {
+            if (!confirm('Load this invoice? Unsaved changes will be lost.')) return;
+
+            const record = this.history[index];
+            const s = record.settings;
+            const d = record.details;
+
+            // Restore Inputs
+            document.getElementById('invoiceNumber').value = d.invoiceNumber;
+            document.getElementById('invoiceDate').value = d.date;
+            document.getElementById('invoiceNote').value = d.note || '';
+
+            document.getElementById('companyName').value = s.companyName;
+            document.getElementById('companyAddress').value = s.companyAddress;
+            document.getElementById('companyGst').value = s.companyGstin;
+            document.getElementById('companyPhone').value = s.companyPhone;
+            document.getElementById('companyEmail').value = s.companyEmail || '';
+
+            document.getElementById('logoUrl').value = s.logoUrl;
+            document.getElementById('signatureUrl').value = s.signatureUrl;
+
+            document.getElementById('clientName').value = s.clientName;
+            document.getElementById('clientAddress').value = s.clientAddress;
+            document.getElementById('clientGst').value = s.clientGstin;
+            document.getElementById('clientPhone').value = s.clientPhone;
+            document.getElementById('clientEmail').value = s.clientEmail || '';
+            document.getElementById('clientNotes').value = s.clientNotes || '';
+            document.getElementById('clientState').value = s.clientState;
+
+            document.getElementById('transportMode').value = s.transportMode;
+            document.getElementById('vehicleNumber').value = s.vehicleNumber;
+
+            document.getElementById('bankName').value = s.bankName;
+            document.getElementById('accountName').value = s.accountName || '';
+            document.getElementById('accountNumber').value = s.accountNumber;
+            document.getElementById('ifscCode').value = s.ifscCode;
+            document.getElementById('upiId').value = s.upiId;
+
+            // Restore Radio
+            if (s.discountType === 'percent') document.getElementById('discPercent').checked = true;
+            else document.getElementById('discFixed').checked = true;
+            document.getElementById('discountValue').value = s.discountValue;
+
+            // Restore State
+            state.items = JSON.parse(JSON.stringify(record.items)); // Deep copy
+            state.taxType = s.clientState === 'Same State' ? 'Same State' : 'Inter State';
+
+            // Trigger Events
+            document.getElementById('logoUrl').dispatchEvent(new Event('input'));
+            document.getElementById('signatureUrl').dispatchEvent(new Event('input'));
+            document.getElementById('clientState').dispatchEvent(new Event('change'));
+
+            // Render
+            renderItems();
+            calculateTotals();
+
+            this.modal.hide();
+        }
+    };
+
+    InvoiceManager.init();
+    window.InvoiceManager = InvoiceManager;
+
+    // Sync Manager Implementation
+    const SyncManager = {
+        supabase: null,
+        url: 'https://ucaqnrzoacndwvaqfmjc.supabase.co',
+        key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjYXFucnpvYWNuZHd2YXFmbWpjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1NTMwMjAsImV4cCI6MjA4MTEyOTAyMH0.4gycNFqN2Bri2TWB79q4e7lxaldoovS61RPgIO-OdtU',
+
+        // UI Elements
+        connEl: document.getElementById('connectionIcon'),
+        syncEl: document.getElementById('syncIcon'),
+        textEl: document.getElementById('syncText'),
+        textContainer: document.getElementById('syncStatusText'),
+        helpModal: null,
+
+        keysToSync: ['invoice_history', 'invoice_profiles_company', 'invoice_profiles_client', 'invoice_items_catalogue'],
+        isOnline: true,
+
+        init() {
+            try {
+                this.helpModal = new bootstrap.Modal(document.getElementById('setupHelpModal'));
+                this.supabase = window.supabase.createClient(this.url, this.key);
+                this.textEl.textContent = 'Init...';
+                this.pullFromCloud(); // Initial Pull
+
+                // Start Auto-Backup
+                setInterval(() => this.pushToCloud(), 10000);
+            } catch (e) {
+                console.error('Supabase Init Fail:', e);
+                this.setErrorState('Config Error');
+            }
+        },
+
+        showHelp() {
+            if (this.helpModal) this.helpModal.show();
+        },
+
+        async pullFromCloud() {
+            try {
+                this.setSyncingState();
+                const { data, error } = await this.supabase
+                    .from('user_data')
+                    .select('key, value');
+
+                if (error) {
+                    // Check for missing table error (42P01 is Postgres, PGRST205 is PostgREST)
+                    if (error.code === '42P01' || error.code === 'PGRST205' || (error.message && error.message.includes('relation "user_data" does not exist'))) {
+                        console.warn('Table user_data not found.');
+                        this.setErrorState('Setup Required');
+                        return;
+                    }
+                    throw error;
+                }
+                if (!data) return;
+
+                // Update Local Storage from Cloud Data
+                let updates = 0;
+                data.forEach(row => {
+                    if (this.keysToSync.includes(row.key)) {
+                        localStorage.setItem(row.key, JSON.stringify(row.value));
+                        updates++;
+                    }
+                });
+
+                if (updates > 0) {
+                    console.log(`Pulled ${updates} keys from cloud. Reloading managers...`);
+                    // Reload Managers to reflect new data
+                    if (window.InvoiceManager && window.InvoiceManager.loadHistory) {
+                        window.InvoiceManager.loadHistory();
+                        window.InvoiceManager.renderTable();
+                    }
+                    if (window.ProfileManager && window.ProfileManager.loadProfiles) window.ProfileManager.loadProfiles();
+                    if (window.ItemManager && window.ItemManager.loadItems) window.ItemManager.loadItems();
+                }
+
+                this.setSuccessState();
+            } catch (err) {
+                console.error('Pull Failed:', err);
+                // If it's a network error or other issue
+                this.setErrorState('Offline');
+                this.isOnline = false;
+            }
+        },
+
+        async pushToCloud() {
+            if (!this.isOnline) {
+                // Try to reconnect?
+                // For now, let's try pushing anyway
+            }
+
+            this.setSyncingState();
+            try {
+                const upserts = this.keysToSync.map(key => {
+                    const val = localStorage.getItem(key);
+                    return {
+                        key: key,
+                        value: val ? JSON.parse(val) : null,
+                        updated_at: new Date().toISOString()
+                    };
+                });
+
+                // Upsert all keys
+                const { error } = await this.supabase
+                    .from('user_data')
+                    .upsert(upserts);
+
+                if (error) {
+                    if (error.code === '42P01' || error.code === 'PGRST205' || (error.message && error.message.includes('relation "user_data" does not exist'))) {
+                        this.setErrorState('Setup Required');
+                        return;
+                    }
+                    throw error;
+                }
+
+                this.setSuccessState();
+                this.isOnline = true;
+            } catch (err) {
+                console.error('Push Failed:', err);
+                this.setErrorState('Failed');
+            }
+        },
+
+        setSyncingState() {
+            this.connEl.className = 'fas fa-wifi text-success';
+            this.syncEl.className = 'fas fa-sync fa-spin text-primary';
+            this.textEl.textContent = 'Syncing...';
+            this.textContainer.className = 'badge bg-light text-primary border fw-normal';
+            this.textContainer.title = 'Sync in progress';
+        },
+
+        setSuccessState() {
+            this.connEl.className = 'fas fa-wifi text-success';
+            this.syncEl.className = 'fas fa-check text-success';
+            this.textEl.textContent = 'Live Backup';
+            this.textContainer.className = 'badge bg-success-subtle text-success border border-success-subtle fw-normal';
+            this.textContainer.title = 'Data is safe';
+        },
+
+        setErrorState(msg) {
+            this.connEl.className = 'fas fa-wifi text-danger';
+            this.syncEl.className = 'fas fa-exclamation-triangle text-danger';
+            this.textEl.textContent = msg;
+
+            if (msg === 'Setup Required') {
+                this.textContainer.className = 'badge bg-warning-subtle text-warning border border-warning-subtle fw-normal';
+                this.textContainer.style.cursor = 'pointer';
+                this.textContainer.title = 'Click to see setup instructions';
+            } else {
+                this.textContainer.className = 'badge bg-danger-subtle text-danger border border-danger-subtle fw-normal';
+                this.textContainer.style.cursor = 'default';
+                this.textContainer.title = 'Sync Error';
+            }
+        }
+    };
+
+    // Init Sync after a slight delay to ensure DOM is ready and other managers are loaded
+    setTimeout(() => SyncManager.init(), 1000);
+    window.SyncManager = SyncManager;
+
 });

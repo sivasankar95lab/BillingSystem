@@ -1,961 +1,406 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice Generator - Sivalingam & Co.</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <style>
-        /* Base Styles - Mobile First */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background-color: #f8f9fa;
-            padding: 15px;
-        }
-        
-        .container {
-            max-width: 100%;
-            margin: 0 auto;
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            overflow: hidden;
-        }
-        
-        header {
-            background-color: #4a6fdc;
-            color: white;
-            padding: 25px 20px;
-            text-align: center;
-        }
-        
-        header h1 {
-            font-size: 1.8rem;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-        
-        .form-container {
-            padding: 25px 20px;
-        }
-        
-        .preview-container {
-            padding: 20px;
-            display: none;
-            justify-content: center;
-            background-color: #f0f2f5;
-        }
-        
-        .invoice-preview {
-            width: 100%;
-            background-color: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            display: block;
-            position: relative;
-        }
-        
-        .page-content {
-            min-height: auto;
-            padding: 20px;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        /* Typography */
-        h2 {
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-            color: #2c3e50;
-            border-bottom: 2px solid #4a6fdc;
-            padding-bottom: 10px;
-        }
-        
-        h3 {
-            font-size: 1.2rem;
-            margin: 25px 0 15px;
-            color: #2c3e50;
-        }
-        
-        /* Form Elements */
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-        
-        input, select, textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background-color: #fff;
-        }
-        
-        input:focus, select:focus, textarea:focus {
-            border-color: #4a6fdc;
-            box-shadow: 0 0 0 3px rgba(74, 111, 220, 0.2);
-            outline: none;
-        }
-        
-        textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-        
-        /* Buttons */
-        .btn {
-            background-color: #4a6fdc;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 500;
-            margin-right: 10px;
-            margin-bottom: 10px;
-            transition: all 0.3s ease;
-            display: inline-block;
-            min-height: 48px; /* Touch-friendly size */
-        }
-        
-        .btn:hover {
-            background-color: #3a5dbd;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        
-        .btn:active {
-            transform: translateY(0);
-        }
-        
-        .btn:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        .btn-danger {
-            background-color: #e74c3c;
-        }
-        
-        .btn-danger:hover {
-            background-color: #c0392b;
-        }
-        
-        .btn-success {
-            background-color: #2ecc71;
-        }
-        
-        .btn-success:hover {
-            background-color: #27ae60;
-        }
-        
-        /* Table Styles */
-        .table-container {
-            margin: 25px 0;
-            overflow-x: auto;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        
-        th, td {
-            border: 1px solid #ddd;
-            padding: 12px 8px;
-            text-align: left;
-        }
-        
-        th {
-            background-color: #f2f2f2;
-            font-weight: 600;
-        }
-        
-        /* Invoice Preview Styles */
-        .invoice-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .invoice-heading {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 25px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            border-bottom: 3px solid #333;
-            padding-bottom: 10px;
-            display: inline-block;
-        }
-        
-        .invoice-header h1 {
-            font-size: 1.8rem;
-            margin-bottom: 10px;
-        }
-        
-        .invoice-header p {
-            margin: 6px 0;
-            font-size: 0.9rem;
-        }
-        
-        .invoice-details {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            margin-bottom: 30px;
-            gap: 20px;
-        }
-        
-        .invoice-details div {
-            flex: 1;
-            min-width: 250px;
-        }
-        
-        .invoice-details h3 {
-            margin-bottom: 15px;
-            border-bottom: 2px solid #333;
-            padding-bottom: 8px;
-            font-size: 1.1rem;
-        }
-        
-        .invoice-details p {
-            margin: 10px 0;
-            font-size: 0.9rem;
-        }
-        
-        .invoice-table {
-            margin-bottom: 30px;
-            page-break-inside: avoid;
-        }
-        
-        .invoice-table th {
-            background-color: #f2f2f2;
-            text-align: center;
-            font-weight: bold;
-            font-size: 0.9rem;
-            padding: 12px 8px;
-        }
-        
-        .invoice-table td {
-            text-align: center;
-            padding: 12px 8px;
-            font-size: 0.9rem;
-        }
-        
-        .invoice-table td:first-child {
-            text-align: center;
-        }
-        
-        .invoice-table td:nth-child(2) {
-            text-align: left;
-        }
-        
-        .invoice-totals {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 30px;
-            page-break-inside: avoid;
-        }
-        
-        .invoice-totals table {
-            width: 100%;
-            max-width: 350px;
-            border: none;
-        }
-        
-        .invoice-totals td {
-            padding: 10px 12px;
-            border: none;
-            font-size: 0.9rem;
-        }
-        
-        .invoice-totals td:last-child {
-            text-align: right;
-            font-weight: bold;
-        }
-        
-        .invoice-totals tr:last-child td {
-            border-top: 2px solid #333;
-            font-size: 1rem;
-            padding-top: 12px;
-        }
-        
-        .amount-in-words {
-            margin-bottom: 30px;
-            padding: 15px;
-            background-color: #f9f9f9;
-            border-left: 4px solid #4a6fdc;
-            font-size: 0.9rem;
-            page-break-inside: avoid;
-        }
-        
-        .amount-in-words strong {
-            color: #333;
-        }
-        
-        .invoice-footer {
-            margin-top: 30px;
-            display: flex;
-            justify-content: flex-end;
-            page-break-inside: avoid;
-        }
-        
-        .invoice-footer div {
-            width: 100%;
-            max-width: 300px;
-        }
-        
-        .signature {
-            border-top: 1px solid #ddd;
-            padding-top: 20px;
-            text-align: center;
-        }
-        
-        .signature p {
-            font-size: 0.9rem;
-            margin: 5px 0;
-        }
-        
-        .signature-img {
-            max-width: 219px;
-            height: 57px;
-            margin: 15px auto;
-            display: block;
-        }
-        
-        .signature-placeholder {
-            width: 219px;
-            height: 57px;
-            border: 1px dashed #ccc;
-            margin: 15px auto;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            color: #999;
-            font-size: 0.8rem;
-        }
-        
-        /* Item Rows */
-        .item-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 15px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-        }
-        
-        .item-row input {
-            padding: 10px;
-        }
-        
-        .item-row input:nth-child(1) {
-            width: 60px;
-            flex-shrink: 0;
-        }
-        
-        .item-row input:nth-child(2) {
-            flex: 1;
-            min-width: 200px;
-        }
-        
-        .item-row input:nth-child(3),
-        .item-row input:nth-child(4),
-        .item-row input:nth-child(5) {
-            width: 100px;
-            flex-shrink: 0;
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        .action-buttons {
-            text-align: center;
-            margin: 30px 0;
-        }
-        
-        .computer-generated {
-            text-align: center;
-            font-style: italic;
-            color: #666;
-            font-size: 0.8rem;
-            margin-top: auto;
-            padding-top: 20px;
-        }
-        
-        /* Print Styles */
-        @media print {
-            body {
-                background-color: white;
-                padding: 0;
-            }
-            
-            .form-container, .action-buttons, header {
-                display: none;
-            }
-            
-            .container {
-                box-shadow: none;
-                max-width: none;
-                margin: 0;
-            }
-            
-            .preview-container {
-                padding: 0;
-                background-color: white;
-                display: flex;
-            }
-            
-            .invoice-preview {
-                box-shadow: none;
-                margin: 0;
-                width: 210mm;
-            }
-            
-            .page-content {
-                min-height: 267mm;
-                page-break-inside: avoid;
-                padding: 15mm;
-            }
-            
-            @page {
-                size: A4;
-                margin: 15mm;
-            }
-            
-            .invoice-table tr {
-                page-break-inside: avoid;
-            }
-            
-            .invoice-totals, .amount-in-words, .invoice-footer {
-                page-break-inside: avoid;
-            }
-        }
-        
-        /* Tablet Styles */
-        @media screen and (min-width: 768px) {
-            body {
-                padding: 20px;
-            }
-            
-            .container {
-                max-width: 900px;
-            }
-            
-            .form-container {
-                padding: 30px;
-            }
-            
-            .form-row {
-                display: flex;
-                gap: 20px;
-            }
-            
-            .form-row .form-group {
-                flex: 1;
-            }
-            
-            .item-row {
-                flex-wrap: nowrap;
-            }
-            
-            .item-row input:nth-child(1) {
-                width: 50px;
-            }
-            
-            .item-row input:nth-child(3),
-            .item-row input:nth-child(4),
-            .item-row input:nth-child(5) {
-                width: 100px;
-            }
-        }
-        
-        /* Desktop Styles */
-        @media screen and (min-width: 1024px) {
-            body {
-                padding: 30px;
-            }
-            
-            .container {
-                max-width: 1200px;
-            }
-            
-            .preview-container {
-                display: flex;
-            }
-            
-            .invoice-preview {
-                width: 210mm;
-                max-width: 794px;
-            }
-            
-            .page-content {
-                min-height: 267mm;
-                padding: 15mm;
-            }
-        }
-    </style>
+    <title>Simple Invoice Generator</title>
+
+    <!-- Google Fonts: Roboto -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>Invoice Generator - Sivalingam & Co.</h1>
-        </header>
-        
-        <div class="form-container">
-            <h2>Invoice Details</h2>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="invoiceNo">Invoice No.</label>
-                    <input type="text" id="invoiceNo" placeholder="Enter invoice number">
-                </div>
-                <div class="form-group">
-                    <label for="invoiceDate">Invoice Date</label>
-                    <input type="date" id="invoiceDate">
-                </div>
-            </div>
-            
-            <h3>Customer Details</h3>
-            <div class="form-group">
-                <label for="receiverName">Name</label>
-                <input type="text" id="receiverName" placeholder="Enter customer name">
-            </div>
-            <div class="form-group">
-                <label for="receiverAddress">Address</label>
-                <textarea id="receiverAddress" rows="3" placeholder="Enter customer address"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="receiverMobile">Mobile Number</label>
-                <input type="text" id="receiverMobile" placeholder="Enter customer mobile number">
-            </div>
-            
-            <h3>Items</h3>
-            <div class="table-container">
-                <div id="itemsContainer">
-                    <div class="item-row">
-                        <input type="text" placeholder="S.No" class="item-sno" value="1">
-                        <input type="text" placeholder="Description of Goods" class="item-desc">
-                        <input type="number" placeholder="Quantity" class="item-qty">
-                        <input type="number" placeholder="Rate" class="item-rate">
-                        <input type="number" placeholder="Amount" class="item-amount" readonly>
-                    </div>
-                </div>
-                <button type="button" class="btn" id="addItem">Add Item</button>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="roundOff">Round Off</label>
-                    <input type="number" id="roundOff" placeholder="Enter round off value" value="0">
-                </div>
-            </div>
-            
-            <div class="action-buttons">
-                <button type="button" class="btn btn-success" id="generateInvoice">Generate Invoice</button>
-                <button type="button" class="btn" id="downloadPDF">Download PDF</button>
-                <button type="button" class="btn btn-danger" id="resetForm">Reset</button>
-            </div>
+
+<body class="bg-light text-dark">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#"><i class="fas fa-file-invoice me-2"></i>Invoice Generator</a>
         </div>
-        
-        <div class="preview-container">
-            <div id="invoicePreview" class="invoice-preview">
-                <div class="page-content">
-                    <div class="invoice-header">
-                        <div class="invoice-heading">INVOICE</div>
-                        <h1>SIVALINGAM & CO.</h1>
-                        <p>NO.1 OLD MAHABALIPURAM ROAD, KANDANCHAVDI, CHENNAI, TAMIL NADU - 600096</p>
-                        <p>PHONE: 9444615746 | 9445106738</p>
-                    </div>
-                    
-                    <div class="invoice-details">
-                        <div>
-                            <h3>Invoice Details</h3>
-                            <p><strong>Invoice No:</strong> <span id="previewInvoiceNo"></span></p>
-                            <p><strong>Date:</strong> <span id="previewInvoiceDate"></span></p>
+    </nav>
+
+    <div class="container py-4">
+        <form id="invoiceForm">
+            <div class="row g-4">
+                <!-- Main Invoice Area -->
+                <div class="col-lg-8">
+                    <!-- Invoice Details Card -->
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div
+                            class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 text-primary"><i class="fas fa-info-circle me-2"></i>Invoice Details</h5>
+                            <button type="button" class="btn btn-sm btn-outline-danger" id="resetBtn">
+                                <i class="fas fa-undo me-1"></i> Reset
+                            </button>
                         </div>
-                        <div>
-                            <h3>Customer Details</h3>
-                            <p><strong>Name:</strong> <span id="previewReceiverName"></span></p>
-                            <p><strong>Address:</strong> <span id="previewReceiverAddress"></span></p>
-                            <p><strong>Mobile:</strong> <span id="previewReceiverMobile"></span></p>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium">Invoice Number</label>
+                                    <input type="text" class="form-control" id="invoiceNumber" placeholder="INV-001"
+                                        value="INV-001" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium">Date</label>
+                                    <input type="date" class="form-control" id="invoiceDate" required>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <div class="row g-4">
+                                <!-- Company Details -->
+                                <div class="col-md-6 border-end-md">
+                                    <h6 class="mb-3 text-secondary">My Company (From)</h6>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">Business Name</label>
+                                        <input type="text" class="form-control" id="companyName"
+                                            placeholder="Your Company Name" value="Sivalingam & Co">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">GSTIN</label>
+                                        <input type="text" class="form-control" id="companyGst"
+                                            placeholder="e.g. 29AAAAA0000A1Z5" value="33AKUPP7275Q1ZY">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">Phone Number</label>
+                                        <input type="text" class="form-control" id="companyPhone"
+                                            placeholder="Ex: +91 9876543210" value="9444615746">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">Address</label>
+                                        <textarea class="form-control" id="companyAddress" rows="2"
+                                            placeholder="Full Address">No.1, Old Mahabalipuram Road, Kandanchavadi, Chennai 600096.</textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Client Details -->
+                                <div class="col-md-6">
+                                    <h6 class="mb-3 text-secondary">Client Details (To)</h6>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">Client Name</label>
+                                        <input type="text" class="form-control" id="clientName"
+                                            placeholder="Client Name">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">Client GSTIN</label>
+                                        <input type="text" class="form-control" id="clientGst"
+                                            placeholder="Client GSTIN (Optional)">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">Phone Number</label>
+                                        <input type="text" class="form-control" id="clientPhone"
+                                            placeholder="Ex: +91 9876543210">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">Place of Supply</label>
+                                        <select class="form-select" id="clientState">
+                                            <option value="Same State">Intra-State (CGST + SGST)</option>
+                                            <option value="Inter State">Inter-State (IGST)</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">Address</label>
+                                        <textarea class="form-control" id="clientAddress" rows="2"
+                                            placeholder="Client address"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <!-- Transport Details (Optional) -->
+                            <h6 class="mb-3 text-secondary">Transport Details <span
+                                    class="text-muted small fw-normal">(For Delivery Challan)</span></h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted">Transport Mode</label>
+                                    <select class="form-select form-select-sm" id="transportMode">
+                                        <option value="">Select Mode</option>
+                                        <option value="Road" selected>Road</option>
+                                        <option value="Rail">Rail</option>
+                                        <option value="Air">Air</option>
+                                        <option value="Ship">Ship</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted">Vehicle/Ref Number</label>
+                                    <input type="text" class="form-control form-control-sm" id="vehicleNumber"
+                                        placeholder="e.g. KA-01-AB-1234" value="TN 19 4496">
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    
-                    <table class="invoice-table">
-                        <thead>
-                            <tr>
-                                <th>S. NO.</th>
-                                <th>Description of Goods</th>
-                                <th>Quantity</th>
-                                <th>Rate (₹)</th>
-                                <th>Amount (₹)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="previewItems">
-                        </tbody>
-                    </table>
-                    
-                    <div class="invoice-totals">
-                        <table>
-                            <tr>
-                                <td>Sub Total</td>
-                                <td id="previewSubtotal">₹0.00</td>
-                            </tr>
-                            <tr>
-                                <td>Round Off</td>
-                                <td id="previewRoundOff">₹0.00</td>
-                            </tr>
-                            <tr>
-                                <td>GRAND TOTAL</td>
-                                <td id="previewGrandTotal">₹0.00</td>
-                            </tr>
-                        </table>
-                    </div>
-                    
-                    <div class="amount-in-words">
-                        <strong>Amount in Words:</strong> <span id="amountInWords">Zero Rupees Only</span>
-                    </div>
-                    
-                    <div class="invoice-footer">
-                        <div class="signature">
-                            <p>For SIVALINGAM & CO.</p>
-                            <img id="signatureImage" class="signature-img" alt="Authorized Signature" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANsAAAA5CAYAAAC/D17JAAAACXBIWXMAAC4jAAAuIwF4pT92AAAGWmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgOS4xLWMwMDMgNzkuOTY5MGE4NywgMjAyNS8wMy8wNi0xOToxMjowMyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIgeG1sbnM6cGhvdG9zaG9wPSJodHRwOi8vbnMuYWRvYmUuY29tL3Bob3Rvc2hvcC8xLjAvIiB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIDI2LjExIChXaW5kb3dzKSIgeG1wOkNyZWF0ZURhdGU9IjIwMjUtMTEtMTZUMjE6MTg6MTQrMDU6MzAiIHhtcDpNZXRhZGF0YURhdGU9IjIwMjUtMTEtMTZUMjE6MTg6MTQrMDU6MzAiIHhtcDpNb2RpZnlEYXRlPSIyMDI1LTExLTE2VDIxOjE4OjE0KzA1OjMwIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjMyYWExYTM2LTM0YzAtOTA0YS05YzdiLWViYjA5MGI3ZjZkZCIgeG1wTU06RG9jdW1lbnRJRD0iYWRvYmU6ZG9jaWQ6cGhvdG9zaG9wOjg2OTRhNGYwLTQxYTItNjY0OC1iZTU1LWM1ZWIyNDg5YWZiMiIgeG1wTU06T3JpZ2luYWxEb2N1bWVudElEPSJ4bXAuZGlkOjU0NTc2Y2M2LTY1MjctNWY0ZS1iMDJmLTEwYTQ4NTkyZGJlZiIgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIgZGM6Zm9ybWF0PSJpbWFnZS9wbmciPiA8eG1wTU06SGlzdG9yeT4gPHJkZjpTZXE+IDxyZGY6bGkgc3RFdnQ6YWN0aW9uPSJjcmVhdGVkIiBzdEV2dDppbnN0YW5jZUlEPSJ4bXAuaWlkOjU0NTc2Y2M2LTY1MjctNWY0ZS1iMDJmLTEwYTQ4NTkyZGJlZiIgc3RFdnQ6d2hlbj0iMjAyNS0xMS0xNlQyMToxODoxNCswNTozMCIgc3RFdnQ6c29mdHdhcmVBZ2VudD0iQWRvYmUgUGhvdG9zaG9wIDI2LjExIChXaW5kb3dzKSIvPiA8cmRmOmxpIHN0RXZ0OmFjdGlvbj0ic2F2ZWQiIHN0RXZ0Omluc3RhbmNlSUQ9InhtcC5paWQ6MzJhYTFhMzYtMzRjMC05MDRhLTljN2ItZWJiMDkwYjdmNmRkIiBzdEV2dDp3aGVuPSIyMDI1LTExLTE2VDIxOjE4OjE0KzA1OjMwIiBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZG9iZSBQaG90b3Nob3AgMjYuMTEgKFdpbmRvd3MpIiBzdEV2dDpjaGFuZ2VkPSIvIi8+IDwvcmRmOlNlcT4gPC94bXBNTTpIaXN0b3J5PiA8cGhvdG9zaG9wOlRleHRMYXllcnM+IDxyZGY6QmFnPiA8cmRmOmxpIHBob3Rvc2hvcDpMYXllck5hbWU9IkQuUGVydW1hbCIgcGhvdG9zaG9wOkxheWVyVGV4dD0iRC5QZXJ1bWFsIi8+IDwvcmRmOkJhZz4gPC9waG90b3Nob3A6VGV4dExheWVycz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz4t9DPMAAAHrUlEQVR42u1dC5WkOhBdC7EQC1jAAhawEAtYiAUsxAIWsIAF3vTbyuztNNB8EqhA7Tl1dnqmG+gkt/6fP+M4/hES2ko//5ofsj/U/dA4Qe0PGVkrWDNZBKGV4CoJXAOBydHrF+ngvTW890WlrGFmYHttKm26oc10RMMMd/V/b+kztWz8pvVWtM490evnYuM1HO1FEQHouLddbpIzhw2vYMNxsQcAk1kgD8puAojmyCG4uRRraY0/JNeO672u5XY+h9+313PUwHQ9+IyA7fiG1wHAOrITXuBTB65bgJrjr98T8NTDQVbTOjt/sCNdt9gi3Uiieo3FfGHEYy7aCldVsQPpZY5y1hUHoQHgNU8DXQCyItE9hjUAJmn2em+zQU1tBWz7Dv5w1aEHaTo8wZMGappLydDoXl9tLGB6xYbrvpjxIGDbtyFjTBVm53MYAlx7RylH2oO3Y4uT7um+qIT+edQOm37MYZ+4SbVxjyGdWJ3t7gQ4YiT92Qxt7p5kn73W2B6QzmNqyXw3sBlu3iU4CNkDjg5lf9X6TjlIYH3rg95qkWw7OZRlGGvquEjcI673q7i/11piA01stuMeq4EblyKVMjunCThAONjAXWyg0bUsd0b4ayIxDGCPHF254DRRmUkzxeRZTOAMqSMyaMN8L/4mXzB8MMtYnRwz2NiCgzSbWDcN+2simx6auXbxf+Cd6wNyBZxFdYhxcFpzeybQDprI++FykGrc07V2eychcVUlODgj401tmT6XIROhTSAxigykWsE+EZkcE2oPIFKofKgSMExvq5nu3+gdNQkSIBrm59eidnbHHL8hZcyOE9jA21gw1k5cbNWW0rq6DATFm0PtjkArAGxlIrAZRvaZYrwnPpRTJPAK6wykmrkszkacGEnHBhqkBvUJMyFKTuoJY+YXlTGF+8zcI9wnD2pPVFLPVVFPVVU3tKDqANC8XdUkzN8sr3Y4ZKBpdJEdInZrRcDF372OCjaKoVRehw4KPd9aESxQTe9rA2C234x+KMkpJsIGOqF3SV+YNlaP+eRhqqclhPtE7yjpWrTpNYFhhFIUE4Pjg82FVdTVzHO8FSTC71zKLBIB2tdnjZLwzDE5/Uha39ZUqhYA0KRWp4LWCPab6xc2p8pBNdoItGrMp8XdcLB1hWe2WdUTgtmkNoONNtpA9bI9W2emZ2iw1o1euxkw9IljRvUFG1hnctiqI5IIgNrmUJ824xCym7L+AWSDL/q7msPAl5nkHmBPmbskIufU6BRU+E02LZgkQ4qsn5PVx8V44hLI2HFUkHBmIZ9SJaw0ticb2u1FfSI3t69DwKz9bmGLuoxjvN2ajJaprkY91y+PTpkZFc8mlqr6zDjNBQ2PNDRVRc+yXcrWDxol6QlgWWCG/nq3aJYLwqn+ZleHh4ltGzeyBzpwgtQTjhF9E6nmGBR8agBJtzJWOhU7tTEavbIuCqXw14r3/0oFk4E9UExJsTPc/WcxIV//ldGBs1cV1tJZqFfsXxnRLivhtffK6zX4wYuM0EMQ23dXX4LSSIVPw5pwYGg6SIre53/WC4euhFbYDl57dbdM6e7HuAnMGShPyinUGQ3bOMXu8u0V/MGe6g3jz8RE1QE2b3oLlGPN2UyzYJ9Q3Qd2GnrH1aoeJOAYaSd0dqFPqk7K5j9s2wSAiE3DRevvwAZswF4sMKhM57kNepL2QB5wQwCkFrKYUBhVQeqY8q/vMljjw2GDk1Fixb4CSYqDJT4k+wUG+BFAmIQMwZyRFA3aC+bQjgACM/H/rx0/Me2oDj7rtReF2l1w7y6IBWrwd1TZg82L74UxRDZF+hQEZ6u7GfUR7Up3Rq4o2OsmUCV7cE6oQPJZkExt4FhrMAANwCthwIoL7jVCDm+Yi9veYYqNmhukF0y3MYnmDcjUzOV4Z+GlzEmtBbAQ9SNnEn7ngrzaAZwZHcbFgHH3ACgL97Io2cKKDz+U5Q5gM3MexmBGm0rgELECqsU18qO7knsgQbXzkkohcCbA1gG4egJEBWaH/7wG+6yDEq23uW8gBT8q4remL3KXanqB00UNYh/tOf8gsLUxM/sPSFa9dWJtinho9sMQv0g1NJZ15KY5ArTvmTT1Us3Wg9ai2spsOPeuKL+MlbKRbTQB2jqniFo72PABEl7nPnm0nq10/RekjNIvEALk4gxZp22UOTRGPYvx3GHMr1tIeDWxZrhhAqmAaZWa3XLowcKI8Zjcp9joJVtsyv16oIxkyKF5DKP8Rx8ctrIe+2aP56RCFhjJP1i64p42pP7gmtmzy4y491i5w3y22dQfiH/UT2gew80RcKWrn6EK2dwBbEv2WrtHqsEIpU7Uxt35j1nNpjuB+VR3AFu0fMSgUZBIs/0Hq7ii0RFjFXJ3641bgg2SS93TbYyjQdu9GsWN12S4y0zt7ogUgl4YvWTsx2mhLa7+eL1oODpI3M4OzT3nZkUZHqrfRqmyJu95mXeRbHptoJlEOnZsEpDFLdhtcmnPkM26Mo3rDNALxVdIV8EAjv6KDs0PsUucOJYeALagZiqcjOMBKABL369eXP1PAJvQ5QPXxdUvYBM6wUE1iqtfwCZ0ThK4uPoFbEIntYtrZD0EbELpU7N6cYqkW+P/AHPv69/9+WQxAAAAAElFTkSuQmCC" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <div class="signature-placeholder">Signature will appear here</div>
-                            <br>
-                            <p>Authorized Signatory</p>
+
+                    <!-- Branding Card (Moved) -->
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-header bg-white border-bottom py-3">
+                            <h5 class="mb-0 text-primary"><i class="fas fa-certificate me-2"></i>Branding & Signature
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-4">
+                                <!-- Logo Section -->
+                                <div class="col-md-6 border-end-md">
+                                    <h6 class="mb-3 text-secondary">Company Logo</h6>
+                                    <div class="mb-3">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="logoOption"
+                                                id="logoUploadOption" value="upload">
+                                            <label class="form-check-label" for="logoUploadOption">Upload</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="logoOption"
+                                                id="logoUrlOption" value="url" checked>
+                                            <label class="form-check-label" for="logoUrlOption">Image URL</label>
+                                        </div>
+                                    </div>
+
+                                    <div id="logoUploadInput" class="d-none">
+                                        <input class="form-control" type="file" id="logoFile" accept="image/*">
+                                        <div class="form-text">Recommended: PNG or JPG, max 200px width.</div>
+                                    </div>
+
+                                    <div id="logoUrlInput" class="">
+                                        <input class="form-control" type="url" id="logoUrl"
+                                            placeholder="https://example.com/logo.png"
+                                            value="https://i.ibb.co/0pDGvsrc/Logo.png">
+                                        <button type="button" class="btn btn-sm btn-outline-primary mt-2"
+                                            id="previewLogoUrlBtn">Load Image</button>
+                                    </div>
+
+                                    <div class="mt-3 text-center p-2 bg-light rounded border"
+                                        style="min-height: 100px; display: flex; align-items: center; justify-content: center;">
+                                        <img id="logoPreview" src="" alt="Logo Preview"
+                                            style="max-width: 100%; max-height: 100px; display: none;">
+                                        <span class="text-muted small" id="logoPlaceholder">No Logo Selected</span>
+                                    </div>
+                                </div>
+
+                                <!-- Signature Section -->
+                                <div class="col-md-6">
+                                    <h6 class="mb-3 text-secondary">Authorized Signature</h6>
+                                    <div class="mb-3">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="signatureOption"
+                                                id="sigDrawOption" value="draw">
+                                            <label class="form-check-label" for="sigDrawOption">Draw</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="signatureOption"
+                                                id="sigUploadOption" value="upload">
+                                            <label class="form-check-label" for="sigUploadOption">Upload</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="signatureOption"
+                                                id="sigUrlOption" value="url" checked>
+                                            <label class="form-check-label" for="sigUrlOption">Image URL</label>
+                                        </div>
+                                    </div>
+
+                                    <div id="sigDrawInput" class="d-none">
+                                        <canvas id="signatureCanvas" class="border rounded bg-white w-100"
+                                            height="150"></canvas>
+                                        <button type="button" class="btn btn-sm btn-outline-danger w-100 mt-1"
+                                            id="clearSignatureBtn"><i class="fas fa-eraser me-1"></i>Clear
+                                            Signature</button>
+                                    </div>
+
+                                    <div id="sigUploadInput" class="d-none">
+                                        <input class="form-control" type="file" id="signatureFile" accept="image/*">
+                                        <div class="mt-3 text-center p-2 bg-light rounded border"
+                                            style="min-height: 100px; display: flex; align-items: center; justify-content: center;">
+                                            <img id="signaturePreview" src="" alt="Signature Preview"
+                                                style="max-width: 100%; max-height: 100px; display: none;">
+                                            <span class="text-muted small" id="signaturePlaceholder">No Signature
+                                                Selected</span>
+                                        </div>
+                                    </div>
+
+                                    <div id="sigUrlInput" class="">
+                                        <input type="text" class="form-control" id="signatureUrl"
+                                            placeholder="https://example.com/signature.png"
+                                            value="https://i.ibb.co/hJ84PzVr/download.png">
+                                        <div class="mt-3 text-center p-2 bg-light rounded border"
+                                            style="min-height: 100px; display: flex; align-items: center; justify-content: center;">
+                                            <img id="signatureUrlPreview" src="" alt="Signature Preview"
+                                                style="max-width: 100%; max-height: 100px; display: none;">
+                                            <span class="text-muted small" id="signatureUrlPlaceholder">Preview will
+                                                appear here</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="computer-generated">
-                        <p>This is a computer-generated invoice.</p>
+
+                    <!-- Payment Details Card -->
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3 text-primary"><i class="fas fa-university me-2"></i>Payment
+                                Details</h5>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label small text-muted">Account Name</label>
+                                    <input type="text" class="form-control" id="accountName"
+                                        placeholder="Account Holder Name" value="Sivalingam Co">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted">Bank Name</label>
+                                    <input type="text" class="form-control" id="bankName" placeholder="e.g. HDFC Bank"
+                                        value="South Indian Bank - Perungudi">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted">Account Number</label>
+                                    <input type="text" class="form-control" id="accountNumber" placeholder="0000000000"
+                                        value="0567073000000496">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted">IFSC Code</label>
+                                    <input type="text" class="form-control" id="ifscCode" placeholder="HDFC0001234"
+                                        value="SIBL0000567">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted">UPI ID</label>
+                                    <input type="text" class="form-control" id="upiId" placeholder="username@bank"
+                                        value="9444615746@okbizaxis">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Items Card -->
+                    <div class="card shadow-sm border-0">
+                        <div
+                            class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 text-primary"><i class="fas fa-list me-2"></i>Items</h5>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="addItemBtn"><i
+                                    class="fas fa-plus me-1"></i> Add Row</button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0" id="itemsTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 35%; padding-left: 1.5rem;">Item Description</th>
+                                            <th style="width: 15%;">HSN/SAC</th>
+                                            <th style="width: 10%;">Qty</th>
+                                            <th style="width: 15%;">Rate (₹)</th>
+                                            <th style="width: 12%;">GST</th>
+                                            <th style="width: 13%; text-align: right; padding-right: 1.5rem;">Amount
+                                            </th>
+                                            <th style="width: 5%;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="itemsBody" class="border-top-0">
+                                        <!-- Dynamic Rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="emptyState" class="text-center py-5 text-muted d-none">
+                                <i class="fas fa-box-open fa-3x mb-3 opacity-50"></i>
+                                <p>No items added yet. Click "Add Row" to start.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar Summary -->
+                <div class="col-lg-4">
+                    <div class="card shadow-sm border-0 mb-4 sticky-top" style="top: 20px; z-index: 100;">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">Summary</h5>
+
+                            <!-- Discount Section -->
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Discount</label>
+                                <div class="input-group input-group-sm mb-2">
+                                    <div class="input-group-text bg-white">
+                                        <div class="form-check form-check-inline mb-0 me-0">
+                                            <input class="form-check-input" type="radio" name="discountType"
+                                                id="discFixed" value="fixed" checked>
+                                            <label class="form-check-label small" for="discFixed">₹</label>
+                                        </div>
+                                    </div>
+                                    <div class="input-group-text bg-white border-start-0">
+                                        <div class="form-check form-check-inline mb-0 me-0">
+                                            <input class="form-check-input" type="radio" name="discountType"
+                                                id="discPercent" value="percent">
+                                            <label class="form-check-label small" for="discPercent">%</label>
+                                        </div>
+                                    </div>
+                                    <input type="number" class="form-control text-end" id="discountValue"
+                                        placeholder="0" min="0">
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Subtotal</span>
+                                <span class="fw-medium" id="summarySubtotal">₹0.00</span>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-2 small text-success" id="discountRow">
+                                <span class="text-muted">Discount</span>
+                                <span id="summaryDiscount">- ₹0.00</span>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-2 small" id="cgstRow">
+                                <span class="text-muted">CGST</span>
+                                <span class="text-dark" id="summaryCGST">₹0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2 small" id="sgstRow">
+                                <span class="text-muted">SGST</span>
+                                <span class="text-dark" id="summarySGST">₹0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2 small d-none" id="igstRow">
+                                <span class="text-muted">IGST</span>
+                                <span class="text-dark" id="summaryIGST">₹0.00</span>
+                            </div>
+
+                            <hr>
+
+                            <div class="d-flex justify-content-between mb-4">
+                                <span class="h5 mb-0">Total</span>
+                                <span class="h5 mb-0 text-primary" id="summaryTotal">₹0.00</span>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-primary py-2" id="btnTaxInvoice">
+                                    <i class="fas fa-file-invoice me-2"></i>Download Tax Invoice
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary py-2" id="btnSimpleInvoice">
+                                    <i class="fas fa-file-alt me-2"></i>Simple Invoice (No Tax)
+                                </button>
+                                <button type="button" class="btn btn-outline-dark py-2" id="btnChallan">
+                                    <i class="fas fa-truck me-2"></i>Delivery Challan
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const addItemBtn = document.getElementById('addItem');
-            const itemsContainer = document.getElementById('itemsContainer');
-            const generateInvoiceBtn = document.getElementById('generateInvoice');
-            const downloadPDFBtn = document.getElementById('downloadPDF');
-            const resetFormBtn = document.getElementById('resetForm');
-            const invoicePreview = document.getElementById('invoicePreview');
-            const signatureImage = document.getElementById('signatureImage');
-            const previewContainer = document.querySelector('.preview-container');
-            
-            let itemCount = 1;
-            
-            // Indian number system formatter
-            function formatIndianNumber(num) {
-                const numStr = num.toString();
-                let result = '';
-                let count = 0;
-                
-                for (let i = numStr.length - 1; i >= 0; i--) {
-                    result = numStr[i] + result;
-                    count++;
-                    
-                    if (count === 3 && i !== 0) {
-                        result = ',' + result;
-                        count = 0;
-                    } else if (count === 2 && i !== 0 && numStr.length > 3) {
-                        result = ',' + result;
-                    }
-                }
-                
-                return result;
-            }
-            
-            // Format currency with Indian system
-            function formatCurrency(amount) {
-                const num = parseFloat(amount);
-                if (isNaN(num)) return '₹0.00';
-                const [integerPart, decimalPart] = num.toFixed(2).split('.');
-                return '₹' + formatIndianNumber(integerPart) + '.' + decimalPart;
-            }
-            
-            // Number to words converter for Indian numbering system
-            function numberToWords(num) {
-                const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 
-                          'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-                const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-                
-                if ((num = num.toString()).length > 9) return 'Overflow';
-                
-                const n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
-                if (!n) return;
-                
-                let str = '';
-                str += n[1] != 0 ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + ' Crore ' : '';
-                str += n[2] != 0 ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + ' Lakh ' : '';
-                str += n[3] != 0 ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + ' Thousand ' : '';
-                str += n[4] != 0 ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + ' Hundred ' : '';
-                str += n[5] != 0 ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) + ' Rupees Only' : ((str != '') ? 'Rupees Only' : 'Zero Rupees Only');
-                
-                return str;
-            }
-            
-            // Add new item row
-            addItemBtn.addEventListener('click', function() {
-                itemCount++;
-                const itemRow = document.createElement('div');
-                itemRow.className = 'item-row';
-                itemRow.innerHTML = `
-                    <input type="text" placeholder="S.No" class="item-sno" value="${itemCount}">
-                    <input type="text" placeholder="Description of Goods" class="item-desc">
-                    <input type="number" placeholder="Quantity" class="item-qty">
-                    <input type="number" placeholder="Rate" class="item-rate">
-                    <input type="number" placeholder="Amount" class="item-amount" readonly>
-                `;
-                itemsContainer.appendChild(itemRow);
-                
-                // Add event listeners to calculate amount
-                const qtyInput = itemRow.querySelector('.item-qty');
-                const rateInput = itemRow.querySelector('.item-rate');
-                const amountInput = itemRow.querySelector('.item-amount');
-                
-                qtyInput.addEventListener('input', calculateItemAmount);
-                rateInput.addEventListener('input', calculateItemAmount);
-            });
-            
-            // Calculate item amount
-            function calculateItemAmount(e) {
-                const itemRow = e.target.closest('.item-row');
-                const qty = parseFloat(itemRow.querySelector('.item-qty').value) || 0;
-                const rate = parseFloat(itemRow.querySelector('.item-rate').value) || 0;
-                const amount = qty * rate;
-                itemRow.querySelector('.item-amount').value = amount.toFixed(2);
-            }
-            
-            // Add event listeners to existing item rows
-            document.querySelectorAll('.item-qty, .item-rate').forEach(input => {
-                input.addEventListener('input', calculateItemAmount);
-            });
-            
-            // Generate invoice preview
-            generateInvoiceBtn.addEventListener('click', function() {
-                // Get form values
-                const invoiceNo = document.getElementById('invoiceNo').value;
-                const invoiceDate = document.getElementById('invoiceDate').value;
-                const receiverName = document.getElementById('receiverName').value;
-                const receiverAddress = document.getElementById('receiverAddress').value;
-                const receiverMobile = document.getElementById('receiverMobile').value;
-                const roundOff = parseFloat(document.getElementById('roundOff').value) || 0;
-                
-                // Update preview with form values
-                document.getElementById('previewInvoiceNo').textContent = invoiceNo;
-                document.getElementById('previewInvoiceDate').textContent = invoiceDate;
-                document.getElementById('previewReceiverName').textContent = receiverName;
-                document.getElementById('previewReceiverAddress').textContent = receiverAddress;
-                document.getElementById('previewReceiverMobile').textContent = receiverMobile;
-                
-                // Update items table
-                const itemsTableBody = document.getElementById('previewItems');
-                itemsTableBody.innerHTML = '';
-                
-                let subtotal = 0;
-                document.querySelectorAll('.item-row').forEach(row => {
-                    const sno = row.querySelector('.item-sno').value;
-                    const desc = row.querySelector('.item-desc').value;
-                    const qty = row.querySelector('.item-qty').value;
-                    const rate = row.querySelector('.item-rate').value;
-                    const amount = parseFloat(row.querySelector('.item-amount').value) || 0;
-                    
-                    if (desc) {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${sno}</td>
-                            <td>${desc}</td>
-                            <td>${formatIndianNumber(qty)}</td>
-                            <td>${formatCurrency(rate)}</td>
-                            <td>${formatCurrency(amount)}</td>
-                        `;
-                        itemsTableBody.appendChild(tr);
-                        subtotal += amount;
-                    }
-                });
-                
-                // Calculate totals
-                const grandTotal = subtotal + roundOff;
-                
-                // Update totals in preview
-                document.getElementById('previewSubtotal').textContent = formatCurrency(subtotal);
-                document.getElementById('previewRoundOff').textContent = formatCurrency(roundOff);
-                document.getElementById('previewGrandTotal').textContent = formatCurrency(grandTotal);
-                
-                // Update amount in words
-                document.getElementById('amountInWords').textContent = numberToWords(Math.round(grandTotal));
-                
-                // Show preview
-                previewContainer.style.display = 'flex';
-                invoicePreview.classList.remove('hidden');
-                
-                // Scroll to preview
-                setTimeout(() => {
-                    previewContainer.scrollIntoView({ behavior: 'smooth' });
-                }, 100);
-            });
-            
-            // Download PDF
-            downloadPDFBtn.addEventListener('click', function() {
-                if (invoicePreview.classList.contains('hidden')) {
-                    alert('Please generate invoice first by clicking the "Generate Invoice" button.');
-                    return;
-                }
-                
-                // Show loading message
-                const originalText = downloadPDFBtn.textContent;
-                downloadPDFBtn.textContent = 'Generating PDF...';
-                downloadPDFBtn.disabled = true;
-                
-                const { jsPDF } = window.jspdf;
-                
-                // Create a temporary container with only the page content
-                const tempContainer = document.createElement('div');
-                tempContainer.style.position = 'absolute';
-                tempContainer.style.left = '-9999px';
-                tempContainer.style.width = '794px';
-                tempContainer.style.backgroundColor = 'white';
-                
-                // Clone only the page content to avoid duplication
-                const pageContentClone = document.querySelector('.page-content').cloneNode(true);
-                tempContainer.appendChild(pageContentClone);
-                document.body.appendChild(tempContainer);
-                
-                html2canvas(tempContainer, {
-                    scale: 1.5,
-                    logging: false,
-                    useCORS: false,
-                    allowTaint: false,
-                    backgroundColor: '#ffffff',
-                    width: 794,
-                    windowWidth: 794
-                }).then(canvas => {
-                    const imgData = canvas.toDataURL('image/jpeg', 0.85);
-                    const pdf = new jsPDF({
-                        orientation: 'portrait',
-                        unit: 'mm',
-                        format: 'a4',
-                        compress: true
-                    });
-                    
-                    // Set margins (15mm on all sides)
-                    const pageWidth = 210; // A4 width in mm
-                    const pageHeight = 297; // A4 height in mm
-                    const margin = 15; // 15mm margin
-                    const contentWidth = pageWidth - (margin * 2);
-                    const contentHeight = pageHeight - (margin * 2);
-                    
-                    // Calculate image dimensions to fit within margins
-                    const imgWidth = contentWidth;
-                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                    
-                    // Calculate how many pages we need
-                    const totalPages = Math.ceil(imgHeight / contentHeight);
-                    
-                    // Add pages with content
-                    for (let i = 0; i < totalPages; i++) {
-                        if (i > 0) {
-                            pdf.addPage();
-                        }
-                        
-                        // Calculate position for this page
-                        const yPosition = -(i * contentHeight);
-                        
-                        // Add image (part of it for this page)
-                        pdf.addImage(
-                            imgData, 
-                            'JPEG', 
-                            margin, 
-                            margin + yPosition, 
-                            imgWidth, 
-                            imgHeight
-                        );
-                    }
-                    
-                    // Clean up
-                    document.body.removeChild(tempContainer);
-                    
-                    // Save PDF
-                    pdf.save('invoice.pdf');
-                    
-                    // Restore button
-                    downloadPDFBtn.textContent = originalText;
-                    downloadPDFBtn.disabled = false;
-                }).catch(error => {
-                    console.error('Error generating PDF:', error);
-                    if (document.body.contains(tempContainer)) {
-                        document.body.removeChild(tempContainer);
-                    }
-                    downloadPDFBtn.textContent = originalText;
-                    downloadPDFBtn.disabled = false;
-                    alert('Error generating PDF. Please try again.');
-                });
-            });
-            
-            // Reset form
-            resetFormBtn.addEventListener('click', function() {
-                document.getElementById('invoiceNo').value = '';
-                document.getElementById('invoiceDate').value = '';
-                document.getElementById('receiverName').value = '';
-                document.getElementById('receiverAddress').value = '';
-                document.getElementById('receiverMobile').value = '';
-                document.getElementById('roundOff').value = '0';
-                
-                // Reset items to just one row
-                itemsContainer.innerHTML = `
-                    <div class="item-row">
-                        <input type="text" placeholder="S.No" class="item-sno" value="1">
-                        <input type="text" placeholder="Description of Goods" class="item-desc">
-                        <input type="number" placeholder="Quantity" class="item-qty">
-                        <input type="number" placeholder="Rate" class="item-rate">
-                        <input type="number" placeholder="Amount" class="item-amount" readonly>
-                    </div>
-                `;
-                
-                // Add event listeners to new row
-                document.querySelectorAll('.item-qty, .item-rate').forEach(input => {
-                    input.addEventListener('input', calculateItemAmount);
-                });
-                
-                // Hide preview
-                invoicePreview.classList.add('hidden');
-                previewContainer.style.display = 'none';
-                
-                // Reset item count
-                itemCount = 1;
-                
-                // Scroll to top
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-        });
-    </script>
+    <!-- Floating Logo -->
+    <img src="https://i.ibb.co/5XvB03Hm/logosmallsize.png" class="fixed-bottom-logo" alt="Logo">
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="js/pdf-builder.js"></script>
+    <script src="js/app.js"></script>
 </body>
+
 </html>

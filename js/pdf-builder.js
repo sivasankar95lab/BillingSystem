@@ -1,12 +1,6 @@
 // pdfMake Configuration
-pdfMake.fonts = {
-    Roboto: {
-        normal: 'Roboto-Regular.ttf',
-        bold: 'Roboto-Medium.ttf',
-        italics: 'Roboto-Italic.ttf',
-        bolditalics: 'Roboto-MediumItalic.ttf'
-    }
-};
+// Uses default VFS fonts from vfs_fonts.js (Roboto)
+
 
 const COLORS = {
     TAX: {
@@ -23,6 +17,11 @@ const COLORS = {
         primary: '#ffc107', // Yellow
         secondary: '#6c757d',
         bg: '#fff3cd'
+    },
+    QUOTE: {
+        primary: '#0dcaf0', // Cyan
+        secondary: '#6c757d',
+        bg: '#e0faff'
     }
 };
 
@@ -36,7 +35,7 @@ function buildHeader(data, title, color) {
         });
     }
 
-    const showGst = title !== 'INVOICE';
+    const showGst = title !== 'INVOICE' && title !== 'QUOTATION';
 
     headerColumns.push({
         width: '*',
@@ -234,6 +233,7 @@ function generateTaxInvoice(data) {
                     }
                 ]
             },
+            buildNote(data),
             ...buildFooter(data, C.primary)
         ],
         styles: getStyles()
@@ -345,6 +345,7 @@ function generateSimpleInvoice(data) {
                     }
                 ]
             },
+            buildNote(data),
             ...buildFooter(data, C.primary)
         ],
         styles: getStyles()
@@ -432,6 +433,7 @@ function generateDeliveryChallan(data) {
                     vLineColor: function (i, node) { return '#eaeaea'; }
                 }
             },
+            buildNote(data),
             // Signatures Section (Combined)
             {
                 margin: [0, 40, 0, 0],
@@ -463,12 +465,160 @@ function generateDeliveryChallan(data) {
                 alignment: 'center',
                 color: '#d39e00',
                 italics: true,
-                fontSize: 10
             }
         ],
         styles: getStyles()
     };
     pdfMake.createPdf(docDefinition).download(`Challan_${data.details.invoiceNumber}.pdf`);
+}
+
+function generateQuote(data) {
+    const C = COLORS.QUOTE;
+    const docDefinition = {
+        content: [
+            ...buildHeader(data, 'QUOTATION', C.primary),
+
+            // Meta Info (Date/Number)
+            {
+                columns: [
+                    { width: '*', text: '' },
+                    {
+                        width: 'auto',
+                        table: {
+                            body: [
+                                [{ text: 'Quote No:', style: 'label' }, { text: data.details.invoiceNumber, bold: true }], // Reusing Invoice Number field
+                                [{ text: 'Date:', style: 'label' }, { text: data.details.date, bold: true }]
+                            ]
+                        },
+                        layout: 'noBorders'
+                    }
+                ],
+                margin: [0, 0, 0, 20]
+            },
+
+            // Item Table (Reusing Simple Style or Tax Style? Let's use Tax Style layout but different colors)
+            // Actually, Quotes often look like Tax Invoices but without the Tax Invoice title.
+            // Let's use a unified approach: Use the custom table builder if possible, or manually build it.
+            // For simplicity/consistency, I'll copy the Tax Invoice structure but change the header.
+
+            // Client Details Section (omitted here because it's usually part of header or just below)
+            // Wait, buildHeader only does "Billed By". Tax Invoice has "Billed To" below it.
+            {
+                margin: [0, 0, 0, 20],
+                columns: [
+                    {
+                        width: '50%',
+                        text: [
+                            // Client details directly
+                            { text: checkEmpty(data.details.clientName) + '\n', style: 'h3' },
+                            { text: checkEmpty(data.details.clientAddress) + '\n', style: 'normal' },
+                            data.details.clientPhone ? { text: 'Ph: ' + data.details.clientPhone + '\n', style: 'normal' } : {}
+                        ]
+                    }
+                ]
+            },
+
+            // Table
+            {
+                table: {
+                    headerRows: 1,
+                    widths: ['*', 'auto', 'auto', 'auto'], // Description, Qty, Rate, Amount
+                    body: [
+                        [
+                            { text: 'Item Description', style: 'tableHeader', fillColor: C.primary },
+                            { text: 'Qty', style: 'tableHeader', fillColor: C.primary },
+                            { text: 'Rate', style: 'tableHeader', fillColor: C.primary },
+                            { text: 'Amount', style: 'tableHeader', alignment: 'right', fillColor: C.primary }
+                        ],
+                        ...data.items.map((item, i) => {
+                            const total = item.qty * item.rate;
+                            const fill = i % 2 === 0 ? '#fff' : C.bg;
+                            return [
+                                { text: item.name, fillColor: fill, margin: [5, 8, 5, 8] },
+                                { text: item.qty, fillColor: fill, margin: [5, 8, 5, 8] },
+                                { text: '₹ ' + item.rate.toFixed(2), fillColor: fill, margin: [5, 8, 5, 8] },
+                                { text: '₹ ' + total.toFixed(2), alignment: 'right', fillColor: fill, margin: [5, 8, 5, 8] }
+                            ];
+                        })
+                    ]
+                },
+                layout: {
+                    hLineWidth: function (i, node) { return 1; },
+                    vLineWidth: function (i, node) { return 1; },
+                    hLineColor: function (i, node) { return '#eaeaea'; },
+                    vLineColor: function (i, node) { return '#eaeaea'; }
+                }
+            },
+
+            // Payment & Totals Section
+            {
+                margin: [0, 20, 0, 0],
+                columns: [
+                    // Payment Details
+                    {
+                        width: '*',
+                        stack: [
+                            (data.details.bankName || data.details.upiId) ? { text: 'Payment Details:', style: 'h3', fontSize: 11, margin: [0, 0, 0, 5] } : {},
+                            data.details.bankName ? {
+                                table: {
+                                    body: [
+                                        [{ text: 'Account Name:', style: 'label', width: 60 }, { text: data.details.accountName, style: 'normal', bold: true }],
+                                        [{ text: 'Bank:', style: 'label' }, { text: data.details.bankName, style: 'normal', bold: true }],
+                                        [{ text: 'A/C No:', style: 'label' }, { text: data.details.accountNumber, style: 'normal' }],
+                                        [{ text: 'IFSC:', style: 'label' }, { text: data.details.ifscCode, style: 'normal' }]
+                                    ]
+                                },
+                                layout: 'noBorders',
+                                margin: [0, 0, 0, 10]
+                            } : {},
+                            data.details.upiId ? {
+                                stack: [
+                                    // Use subtotal for Quote QR as taxes aren't applied yet
+                                    { qr: `upi://pay?pa=${data.details.upiId}&pn=${data.details.companyName}&am=${data.totals.subtotal}&cu=INR`, fit: 70 },
+                                    { text: 'Scan to Pay', style: 'label', margin: [0, 5, 0, 0] },
+                                    { text: data.details.upiId, style: 'normal', fontSize: 9 }
+                                ]
+                            } : {}
+                        ]
+                    },
+                    {
+                        width: 'auto',
+                        table: {
+                            widths: [100, 80],
+                            body: [
+                                ['Total', { text: '₹ ' + data.totals.subtotal.toFixed(2), bold: true, fontSize: 12, alignment: 'right', color: C.primary }]
+                            ]
+                        },
+                        layout: 'noBorders'
+                    }
+                ]
+            },
+
+            // Disclaimer
+            {
+                margin: [0, 10, 0, 0],
+                text: 'The quoted amount does not yet include any applicable taxes.',
+                italics: true,
+                fontSize: 9,
+                alignment: 'right',
+                color: '#666'
+            },
+
+            // Amount in Words
+            {
+                margin: [0, 20, 0, 0],
+                text: [
+                    { text: 'Amount in Words: ', bold: true, fontSize: 10 },
+                    { text: data.numberInWordsSimple, italics: true, fontSize: 10 } // Use Simple (no tax) words
+                ]
+            },
+
+            buildNote(data),
+            ...buildFooter(data, C.primary)
+        ],
+        styles: getStyles()
+    };
+    pdfMake.createPdf(docDefinition).download(`Quote_${data.details.invoiceNumber}.pdf`);
 }
 
 function getStyles() {
@@ -478,6 +628,17 @@ function getStyles() {
         h3: { fontSize: 12, bold: true, margin: [0, 0, 0, 5] },
         normal: { fontSize: 10, margin: [0, 0, 0, 2] },
         tableHeader: { bold: true, fontSize: 10, color: 'white', margin: [0, 5, 0, 5] }
+    };
+}
+
+function buildNote(data) {
+    if (!data.details.note) return {};
+    return {
+        margin: [0, 20, 0, 0],
+        stack: [
+            { text: 'Note:', style: 'label', bold: true },
+            { text: data.details.note, style: 'normal', italics: true }
+        ]
     };
 }
 

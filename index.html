@@ -23,11 +23,70 @@
 
 <body class="bg-light text-dark">
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="#"><i class="fas fa-file-invoice me-2"></i>Invoice Generator</a>
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm border-bottom">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <i class="fas fa-file-invoice text-primary me-2"></i>
+                <span class="fw-bold tracking-tight text-dark">Invoice<span class="text-primary">Generator</span></span>
+            </a>
+
+            <div class="d-flex align-items-center gap-3">
+                <!-- Connection Status -->
+                <div id="connectionIndicator" class="text-secondary" title="Connection Status">
+                    <i class="fas fa-wifi" id="connectionIcon"></i>
+                </div>
+
+                <!-- Sync Activity -->
+                <div id="syncActivity" class="text-secondary" title="Sync Status">
+                    <i class="fas fa-sync" id="syncIcon"></i>
+                </div>
+
+                <!-- Status Text -->
+                <div id="syncStatusText" class="badge bg-light text-secondary border fw-normal" style="cursor: pointer;"
+                    onclick="SyncManager.showHelp()">
+                    <span id="syncText">Connecting...</span>
+                </div>
+            </div>
         </div>
     </nav>
+
+    <!-- Setup Help Modal -->
+    <div class="modal fade" id="setupHelpModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-database me-2"></i>Setup Cloud Backup</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>To enable cloud backup, you need to create a table in your Supabase project.</p>
+                    <ol>
+                        <li>Go to your <a href="https://supabase.com/dashboard" target="_blank">Supabase Dashboard</a>.
+                        </li>
+                        <li>Open the <strong>SQL Editor</strong>.</li>
+                        <li>Copy and run the following command:</li>
+                    </ol>
+                    <div class="bg-light p-3 rounded border mb-3 position-relative">
+                        <pre class="mb-0 small"><code>create table if not exists user_data (
+  key text primary key,
+  value jsonb,
+  updated_at timestamp with time zone default timezone('utc'::text, now())
+);
+alter table user_data enable row level security;
+create policy "Allow generic access" on user_data for all using (true) with check (true);</code></pre>
+                        <button class="btn btn-sm btn-outline-primary position-absolute top-0 end-0 m-2"
+                            onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent); this.textContent = 'Copied!'; setTimeout(()=>this.textContent='Copy', 2000);">Copy</button>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> Once created, refresh this page to connect.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="container py-4">
         <form id="invoiceForm">
@@ -39,9 +98,19 @@
                         <div
                             class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
                             <h5 class="mb-0 text-primary"><i class="fas fa-info-circle me-2"></i>Invoice Details</h5>
-                            <button type="button" class="btn btn-sm btn-outline-danger" id="resetBtn">
-                                <i class="fas fa-undo me-1"></i> Reset
-                            </button>
+                            <div class="col-md-6 text-md-end no-print">
+                                <button type="button" class="btn btn-outline-success me-2"
+                                    onclick="InvoiceManager.saveCurrent()">
+                                    <i class="fas fa-save me-1"></i>Save
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary me-2"
+                                    onclick="InvoiceManager.openHistory()">
+                                    <i class="fas fa-history me-1"></i>History
+                                </button>
+                                <button type="button" class="btn btn-danger" id="resetBtn">
+                                    <i class="fas fa-redo me-1"></i>Reset
+                                </button>
+                            </div>
                         </div>
                         <div class="card-body">
                             <div class="row g-3">
@@ -61,32 +130,124 @@
                             <div class="row g-4">
                                 <!-- Company Details -->
                                 <div class="col-md-6 border-end-md">
-                                    <h6 class="mb-3 text-secondary">My Company (From)</h6>
+                                    <h6 class="mb-3 text-secondary d-flex justify-content-between align-items-center">
+                                        <span>My Company (From)</span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            onclick="openProfileModal('company')">
+                                            <i class="fas fa-folder-open me-1"></i> Manage
+                                        </button>
+                                    </h6>
                                     <div class="mb-2">
                                         <label class="form-label small text-muted">Business Name</label>
                                         <input type="text" class="form-control" id="companyName"
-                                            placeholder="Your Company Name" value="Sivalingam & Co">
+                                            placeholder="Your Company Name">
                                     </div>
                                     <div class="mb-2">
                                         <label class="form-label small text-muted">GSTIN</label>
                                         <input type="text" class="form-control" id="companyGst"
-                                            placeholder="e.g. 29AAAAA0000A1Z5" value="33AKUPP7275Q1ZY">
+                                            placeholder="e.g. 29AAAAA0000A1Z5">
                                     </div>
                                     <div class="mb-2">
                                         <label class="form-label small text-muted">Phone Number</label>
                                         <input type="text" class="form-control" id="companyPhone"
-                                            placeholder="Ex: +91 9876543210" value="9444615746">
+                                            placeholder="Ex: +91 9876543210">
                                     </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">Email</label>
+                                        <input type="email" class="form-control" id="companyEmail"
+                                            placeholder="company@example.com">
+                                    </div>
+
                                     <div class="mb-2">
                                         <label class="form-label small text-muted">Address</label>
                                         <textarea class="form-control" id="companyAddress" rows="2"
                                             placeholder="Full Address">No.1, Old Mahabalipuram Road, Kandanchavadi, Chennai 600096.</textarea>
                                     </div>
+
+                                    <hr class="my-3">
+
+                                    <!-- Logo Section (Moved) -->
+                                    <h6 class="mb-3 text-secondary">Company Logo</h6>
+                                    <div class="mb-3">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="logoOption"
+                                                id="logoUrlOption" value="url" checked>
+                                            <label class="form-check-label" for="logoUrlOption">Image URL</label>
+                                        </div>
+                                    </div>
+
+                                    <div id="logoUrlInput" class="">
+                                        <div class="input-group">
+                                            <input class="form-control" type="url" id="logoUrl"
+                                                placeholder="https://example.com/logo.png">
+                                            <button class="btn btn-outline-secondary" type="button"
+                                                id="clearLogoUrlBtn">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-primary mt-2"
+                                            id="previewLogoUrlBtn">Load Image</button>
+                                    </div>
+
+                                    <div class="mt-3 text-center p-2 bg-light rounded border"
+                                        style="min-height: 100px; display: flex; align-items: center; justify-content: center;">
+                                        <img id="logoPreview" src="" alt="Logo Preview"
+                                            style="max-width: 100%; max-height: 100px; display: none;">
+                                        <span class="text-muted small" id="logoPlaceholder">No Logo Selected</span>
+                                    </div>
+
+                                    <hr class="my-3">
+
+                                    <!-- Signature Section (Moved) -->
+                                    <h6 class="mb-3 text-secondary">Authorized Signature</h6>
+                                    <div class="mb-3">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="signatureOption"
+                                                id="sigDrawOption" value="draw">
+                                            <label class="form-check-label" for="sigDrawOption">Draw</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="signatureOption"
+                                                id="sigUrlOption" value="url" checked>
+                                            <label class="form-check-label" for="sigUrlOption">Image URL</label>
+                                        </div>
+                                    </div>
+
+                                    <div id="sigDrawInput" class="d-none">
+                                        <canvas id="signatureCanvas" class="border rounded bg-white w-100"
+                                            height="150"></canvas>
+                                        <button type="button" class="btn btn-sm btn-outline-danger w-100 mt-1"
+                                            id="clearSignatureBtn"><i class="fas fa-eraser me-1"></i>Clear
+                                            Signature</button>
+                                    </div>
+
+                                    <div id="sigUrlInput" class="">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="signatureUrl"
+                                                placeholder="https://example.com/signature.png">
+                                            <button class="btn btn-outline-secondary" type="button" id="clearSigUrlBtn">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                        <div class="mt-3 text-center p-2 bg-light rounded border"
+                                            style="min-height: 100px; display: flex; align-items: center; justify-content: center;">
+                                            <img id="signatureUrlPreview" src="" alt="Signature Preview"
+                                                style="max-width: 100%; max-height: 100px; display: none;">
+                                            <span class="text-muted small" id="signatureUrlPlaceholder">Preview will
+                                                appear here</span>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Client Details -->
                                 <div class="col-md-6">
-                                    <h6 class="mb-3 text-secondary">Client Details (To)</h6>
+                                    <h6 class="mb-3 text-secondary d-flex justify-content-between align-items-center">
+                                        <span>Client Details (To)</span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            onclick="openProfileModal('client')">
+                                            <i class="fas fa-folder-open me-1"></i> Manage
+                                        </button>
+                                    </h6>
                                     <div class="mb-2">
                                         <label class="form-label small text-muted">Client Name</label>
                                         <input type="text" class="form-control" id="clientName"
@@ -101,6 +262,16 @@
                                         <label class="form-label small text-muted">Phone Number</label>
                                         <input type="text" class="form-control" id="clientPhone"
                                             placeholder="Ex: +91 9876543210">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">Email</label>
+                                        <input type="email" class="form-control" id="clientEmail"
+                                            placeholder="client@example.com">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">Notes</label>
+                                        <input type="text" class="form-control" id="clientNotes"
+                                            placeholder="Internal notes (not on PDF)">
                                     </div>
                                     <div class="mb-2">
                                         <label class="form-label small text-muted">Place of Supply</label>
@@ -136,144 +307,47 @@
                                 <div class="col-md-6">
                                     <label class="form-label small text-muted">Vehicle/Ref Number</label>
                                     <input type="text" class="form-control form-control-sm" id="vehicleNumber"
-                                        placeholder="e.g. KA-01-AB-1234" value="TN 19 4496">
+                                        placeholder="e.g. KA-01-AB-1234">
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Branding Card (Moved) -->
-                    <div class="card shadow-sm border-0 mb-4">
-                        <div class="card-header bg-white border-bottom py-3">
-                            <h5 class="mb-0 text-primary"><i class="fas fa-certificate me-2"></i>Branding & Signature
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-4">
-                                <!-- Logo Section -->
-                                <div class="col-md-6 border-end-md">
-                                    <h6 class="mb-3 text-secondary">Company Logo</h6>
-                                    <div class="mb-3">
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="radio" name="logoOption"
-                                                id="logoUploadOption" value="upload">
-                                            <label class="form-check-label" for="logoUploadOption">Upload</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="radio" name="logoOption"
-                                                id="logoUrlOption" value="url" checked>
-                                            <label class="form-check-label" for="logoUrlOption">Image URL</label>
-                                        </div>
-                                    </div>
 
-                                    <div id="logoUploadInput" class="d-none">
-                                        <input class="form-control" type="file" id="logoFile" accept="image/*">
-                                        <div class="form-text">Recommended: PNG or JPG, max 200px width.</div>
-                                    </div>
-
-                                    <div id="logoUrlInput" class="">
-                                        <input class="form-control" type="url" id="logoUrl"
-                                            placeholder="https://example.com/logo.png"
-                                            value="https://i.ibb.co/0pDGvsrc/Logo.png">
-                                        <button type="button" class="btn btn-sm btn-outline-primary mt-2"
-                                            id="previewLogoUrlBtn">Load Image</button>
-                                    </div>
-
-                                    <div class="mt-3 text-center p-2 bg-light rounded border"
-                                        style="min-height: 100px; display: flex; align-items: center; justify-content: center;">
-                                        <img id="logoPreview" src="" alt="Logo Preview"
-                                            style="max-width: 100%; max-height: 100px; display: none;">
-                                        <span class="text-muted small" id="logoPlaceholder">No Logo Selected</span>
-                                    </div>
-                                </div>
-
-                                <!-- Signature Section -->
-                                <div class="col-md-6">
-                                    <h6 class="mb-3 text-secondary">Authorized Signature</h6>
-                                    <div class="mb-3">
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="radio" name="signatureOption"
-                                                id="sigDrawOption" value="draw">
-                                            <label class="form-check-label" for="sigDrawOption">Draw</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="radio" name="signatureOption"
-                                                id="sigUploadOption" value="upload">
-                                            <label class="form-check-label" for="sigUploadOption">Upload</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="radio" name="signatureOption"
-                                                id="sigUrlOption" value="url" checked>
-                                            <label class="form-check-label" for="sigUrlOption">Image URL</label>
-                                        </div>
-                                    </div>
-
-                                    <div id="sigDrawInput" class="d-none">
-                                        <canvas id="signatureCanvas" class="border rounded bg-white w-100"
-                                            height="150"></canvas>
-                                        <button type="button" class="btn btn-sm btn-outline-danger w-100 mt-1"
-                                            id="clearSignatureBtn"><i class="fas fa-eraser me-1"></i>Clear
-                                            Signature</button>
-                                    </div>
-
-                                    <div id="sigUploadInput" class="d-none">
-                                        <input class="form-control" type="file" id="signatureFile" accept="image/*">
-                                        <div class="mt-3 text-center p-2 bg-light rounded border"
-                                            style="min-height: 100px; display: flex; align-items: center; justify-content: center;">
-                                            <img id="signaturePreview" src="" alt="Signature Preview"
-                                                style="max-width: 100%; max-height: 100px; display: none;">
-                                            <span class="text-muted small" id="signaturePlaceholder">No Signature
-                                                Selected</span>
-                                        </div>
-                                    </div>
-
-                                    <div id="sigUrlInput" class="">
-                                        <input type="text" class="form-control" id="signatureUrl"
-                                            placeholder="https://example.com/signature.png"
-                                            value="https://i.ibb.co/hJ84PzVr/download.png">
-                                        <div class="mt-3 text-center p-2 bg-light rounded border"
-                                            style="min-height: 100px; display: flex; align-items: center; justify-content: center;">
-                                            <img id="signatureUrlPreview" src="" alt="Signature Preview"
-                                                style="max-width: 100%; max-height: 100px; display: none;">
-                                            <span class="text-muted small" id="signatureUrlPlaceholder">Preview will
-                                                appear here</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- Payment Details Card -->
                     <div class="card shadow-sm border-0 mb-4">
+                        <div
+                            class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 text-primary"><i class="fas fa-university me-2"></i>Payment Details</h5>
+                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                onclick="openProfileModal('payment')">
+                                <i class="fas fa-address-book me-1"></i>Manage
+                            </button>
+                        </div>
                         <div class="card-body">
-                            <h5 class="card-title mb-3 text-primary"><i class="fas fa-university me-2"></i>Payment
-                                Details</h5>
                             <div class="row g-3">
                                 <div class="col-12">
                                     <label class="form-label small text-muted">Account Name</label>
                                     <input type="text" class="form-control" id="accountName"
-                                        placeholder="Account Holder Name" value="Sivalingam Co">
+                                        placeholder="Account Holder Name">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label small text-muted">Bank Name</label>
-                                    <input type="text" class="form-control" id="bankName" placeholder="e.g. HDFC Bank"
-                                        value="South Indian Bank - Perungudi">
+                                    <label class="form-label small text-muted">Bank Name - Branch</label>
+                                    <input type="text" class="form-control" id="bankName"
+                                        placeholder="e.g. HDFC Bank - Main Branch">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small text-muted">Account Number</label>
-                                    <input type="text" class="form-control" id="accountNumber" placeholder="0000000000"
-                                        value="0567073000000496">
+                                    <input type="text" class="form-control" id="accountNumber" placeholder="0000000000">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small text-muted">IFSC Code</label>
-                                    <input type="text" class="form-control" id="ifscCode" placeholder="HDFC0001234"
-                                        value="SIBL0000567">
+                                    <input type="text" class="form-control" id="ifscCode" placeholder="HDFC0001234">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small text-muted">UPI ID</label>
-                                    <input type="text" class="form-control" id="upiId" placeholder="username@bank"
-                                        value="9444615746@okbizaxis">
+                                    <input type="text" class="form-control" id="upiId" placeholder="username@bank">
                                 </div>
                             </div>
                         </div>
@@ -284,33 +358,52 @@
                         <div
                             class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
                             <h5 class="mb-0 text-primary"><i class="fas fa-list me-2"></i>Items</h5>
-                            <button type="button" class="btn btn-sm btn-outline-primary" id="addItemBtn"><i
-                                    class="fas fa-plus me-1"></i> Add Row</button>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="table table-hover align-middle mb-0" id="itemsTable">
-                                    <thead class="table-light">
+                                    <thead class="bg-light text-secondary">
                                         <tr>
-                                            <th style="width: 35%; padding-left: 1.5rem;">Item Description</th>
+                                            <th style="width: 35%;">Item Name</th>
                                             <th style="width: 15%;">HSN/SAC</th>
                                             <th style="width: 10%;">Qty</th>
-                                            <th style="width: 15%;">Rate (₹)</th>
-                                            <th style="width: 12%;">GST</th>
-                                            <th style="width: 13%; text-align: right; padding-right: 1.5rem;">Amount
-                                            </th>
+                                            <th style="width: 15%;">Rate</th>
+                                            <th style="width: 15%;">GST</th>
+                                            <th style="width: 10%; text-align: right;">Amount</th>
                                             <th style="width: 5%;"></th>
                                         </tr>
                                     </thead>
-                                    <tbody id="itemsBody" class="border-top-0">
+                                    <tbody id="itemsBody">
                                         <!-- Dynamic Rows -->
                                     </tbody>
                                 </table>
                             </div>
-                            <div id="emptyState" class="text-center py-5 text-muted d-none">
-                                <i class="fas fa-box-open fa-3x mb-3 opacity-50"></i>
-                                <p>No items added yet. Click "Add Row" to start.</p>
+                            <div id="emptyState" class="text-center py-5 d-none">
+                                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No items added yet</p>
                             </div>
+
+                            <!-- Buttons Footer -->
+                            <div class="p-3 border-top bg-light d-flex justify-content-start gap-2">
+                                <button type="button" class="btn btn-primary" id="addItemBtn">
+                                    <i class="fas fa-plus me-1"></i>Add Item
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" onclick="openItemModal()">
+                                    <i class="fas fa-list me-1"></i>Manage Items
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Notes Card -->
+                    <div class="card shadow-sm border-0 mt-4">
+                        <div class="card-header bg-white border-bottom py-3">
+                            <h5 class="mb-0 text-primary"><i class="fas fa-sticky-note me-2"></i>Additional Notes</h5>
+                        </div>
+                        <div class="card-body">
+                            <textarea class="form-control" id="invoiceNote" rows="3"
+                                placeholder="Terms & Conditions, Payment Instructions, or any other notes..."></textarea>
+                            <div class="form-text">These notes will appear at the bottom of the invoice.</div>
                         </div>
                     </div>
                 </div>
@@ -378,10 +471,13 @@
                                 <button type="button" class="btn btn-primary py-2" id="btnTaxInvoice">
                                     <i class="fas fa-file-invoice me-2"></i>Download Tax Invoice
                                 </button>
-                                <button type="button" class="btn btn-outline-secondary py-2" id="btnSimpleInvoice">
+                                <button type="button" class="btn btn-success py-2" id="btnSimpleInvoice">
                                     <i class="fas fa-file-alt me-2"></i>Simple Invoice (No Tax)
                                 </button>
-                                <button type="button" class="btn btn-outline-dark py-2" id="btnChallan">
+                                <button type="button" class="btn btn-info text-white py-2" id="btnQuote">
+                                    <i class="fas fa-file-invoice-dollar me-2"></i>Download Quote
+                                </button>
+                                <button type="button" class="btn btn-warning py-2" id="btnChallan">
                                     <i class="fas fa-truck me-2"></i>Delivery Challan
                                 </button>
                             </div>
@@ -395,12 +491,121 @@
     <!-- Floating Logo -->
     <img src="https://i.ibb.co/5XvB03Hm/logosmallsize.png" class="fixed-bottom-logo" alt="Logo">
 
+    <!-- Profile Management Modal -->
+    <div class="modal fade" id="profileModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="profileModalTitle">Manage Profiles</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="p-3 bg-light border-bottom">
+                        <button class="btn btn-primary btn-sm" id="addProfileRowBtn">
+                            <i class="fas fa-plus me-1"></i> Add New Row
+                        </button>
+                        <span class="text-muted small ms-2">Click on a cell to edit. Changes are auto-saved.</span>
+                    </div>
+                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                        <table class="table table-striped table-hover mb-0 align-middle">
+                            <thead class="table-light sticky-top" style="z-index: 1;">
+                                <tr id="profileTableHeader">
+                                    <!-- Dynamic Headers -->
+                                </tr>
+                            </thead>
+                            <tbody id="profileTableBody">
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="profileEmptyState" class="text-center py-5 text-muted d-none">
+                        <i class="fas fa-folder-open fa-3x mb-3 opacity-50"></i>
+                        <p>No profiles found. Add a row to get started.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Item DataList -->
+    <datalist id="itemList"></datalist>
+
+    <!-- Item Manager Modal -->
+    <div class="modal fade" id="itemModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Manage Predefined Items</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr class="bg-light">
+                                    <th>Item Name</th>
+                                    <th>HSN/SAC</th>
+                                    <th>Rate</th>
+                                    <th>GST %</th>
+                                    <th style="width: 150px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemTableBody">
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="itemEmptyState" class="text-center py-4 text-muted">
+                        No items found. Add items to list or type in invoice to auto-save.
+                    </div>
+                    <button class="btn btn-sm btn-primary mt-2" onclick="ItemManager.addRow()">
+                        <i class="fas fa-plus me-1"></i>Add New Item
+                    </button>
+                    <!-- Hidden input to track if we are picking for a specific row -->
+                    <input type="hidden" id="targetRowId" value="">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice History Modal -->
+    <div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Invoice History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr class="bg-light">
+                                    <th>Date Saved</th>
+                                    <th>Invoice #</th>
+                                    <th>Client</th>
+                                    <th>Amount</th>
+                                    <th style="width: 150px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div id="historyEmptyState" class="text-center py-4 text-muted">
+                        No saved invoices found.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/pdf-builder.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/app.js?v=1"></script>
 </body>
 
 </html>

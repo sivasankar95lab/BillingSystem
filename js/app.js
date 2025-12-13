@@ -1192,7 +1192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         textContainer: document.getElementById('syncStatusText'),
         helpModal: null,
 
-        keysToSync: ['invoice_history', 'invoice_profiles_company', 'invoice_profiles_client', 'invoice_items_catalogue'],
+        keysToSync: ['invoice_history', 'invoice_profiles_company', 'invoice_profiles_client', 'invoice_profiles_payment', 'invoice_items_catalogue'],
         isOnline: true,
 
         init() {
@@ -1335,5 +1335,142 @@ document.addEventListener('DOMContentLoaded', () => {
     // Init Sync after a slight delay to ensure DOM is ready and other managers are loaded
     setTimeout(() => SyncManager.init(), 1000);
     window.SyncManager = SyncManager;
+
+    // Data Manager Implementation
+    const DataManager = {
+        modal: null,
+
+        init() {
+            this.modal = new bootstrap.Modal(document.getElementById('viewDatabaseModal'));
+
+            // Setup import file input handler
+            const fileInput = document.getElementById('importFileInput');
+            if (fileInput) {
+                fileInput.addEventListener('change', (e) => this.handleFileImport(e));
+            }
+        },
+
+        viewDatabase() {
+            // Gather all relevant localStorage data
+            const data = {
+                invoice_history: this.getLocalStorageItem('invoice_history'),
+                invoice_profiles_company: this.getLocalStorageItem('invoice_profiles_company'),
+                invoice_profiles_client: this.getLocalStorageItem('invoice_profiles_client'),
+                invoice_profiles_payment: this.getLocalStorageItem('invoice_profiles_payment'),
+                invoice_items_catalogue: this.getLocalStorageItem('invoice_items_catalogue')
+            };
+
+            // Format as pretty JSON
+            const jsonStr = JSON.stringify(data, null, 2);
+            document.getElementById('databaseJson').textContent = jsonStr;
+
+            // Show modal
+            this.modal.show();
+        },
+
+        getLocalStorageItem(key) {
+            const item = localStorage.getItem(key);
+            return item ? JSON.parse(item) : null;
+        },
+
+        exportData() {
+            // Gather all data
+            const data = {
+                exportDate: new Date().toISOString(),
+                version: '1.0',
+                data: {
+                    invoice_history: this.getLocalStorageItem('invoice_history'),
+                    invoice_profiles_company: this.getLocalStorageItem('invoice_profiles_company'),
+                    invoice_profiles_client: this.getLocalStorageItem('invoice_profiles_client'),
+                    invoice_profiles_payment: this.getLocalStorageItem('invoice_profiles_payment'),
+                    invoice_items_catalogue: this.getLocalStorageItem('invoice_items_catalogue')
+                }
+            };
+
+            // Create blob and download
+            const jsonStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `invoice-data-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            alert('Data exported successfully!');
+        },
+
+        importData() {
+            if (!confirm('Import data? This will OVERWRITE your current local data. Make sure you have a backup first!')) {
+                return;
+            }
+
+            // Trigger file input
+            document.getElementById('importFileInput').click();
+        },
+
+        handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+
+                    // Validate structure
+                    if (!imported.data) {
+                        throw new Error('Invalid data format');
+                    }
+
+                    // Import each key
+                    const keys = ['invoice_history', 'invoice_profiles_company', 'invoice_profiles_client', 'invoice_profiles_payment', 'invoice_items_catalogue'];
+                    let importCount = 0;
+
+                    keys.forEach(key => {
+                        if (imported.data[key]) {
+                            localStorage.setItem(key, JSON.stringify(imported.data[key]));
+                            importCount++;
+                        }
+                    });
+
+                    // Reload all managers
+                    if (window.InvoiceManager && window.InvoiceManager.loadHistory) {
+                        window.InvoiceManager.loadHistory();
+                    }
+                    if (window.ProfileManager && window.ProfileManager.loadProfiles) {
+                        window.ProfileManager.loadProfiles();
+                    }
+                    if (window.ItemManager && window.ItemManager.loadItems) {
+                        window.ItemManager.loadItems();
+                        window.ItemManager.updateDatalist();
+                    }
+
+                    alert(`Data imported successfully! ${importCount} categories restored.\n\nExported on: ${imported.exportDate || 'Unknown'}\n\nPlease refresh the page to see all changes.`);
+
+                    // Optionally refresh the page
+                    if (confirm('Refresh the page now to apply all changes?')) {
+                        location.reload();
+                    }
+
+                } catch (err) {
+                    console.error('Import failed:', err);
+                    alert('Failed to import data. Please make sure the file is a valid backup file exported from this application.');
+                }
+
+                // Reset file input
+                event.target.value = '';
+            };
+
+            reader.readAsText(file);
+        }
+    };
+
+    // Initialize Data Manager
+    DataManager.init();
+    window.DataManager = DataManager;
 
 });

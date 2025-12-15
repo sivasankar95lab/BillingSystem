@@ -616,6 +616,15 @@ function generateQuote(data) {
             buildNote(data),
             ...buildFooter(data, C.primary)
         ],
+        watermark: {
+            text: 'QUOTATION',
+            color: C.primary,
+            opacity: 0.15,
+            bold: true,
+            italics: false,
+            fontSize: 80,
+            angle: 45
+        },
         styles: getStyles()
     };
     pdfMake.createPdf(docDefinition).download(`Quote_${data.details.invoiceNumber}.pdf`);

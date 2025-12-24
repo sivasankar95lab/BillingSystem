@@ -26,39 +26,123 @@ const COLORS = {
 };
 
 function buildHeader(data, title, color) {
-    const headerColumns = [];
-    if (data.details.logo) {
-        headerColumns.push({
-            image: data.details.logo,
-            width: 80,
-            margin: [0, 0, 20, 0]
-        });
-    }
-
+    const leftStack = [];
     const showGst = title !== 'INVOICE' && title !== 'QUOTATION';
 
-    headerColumns.push({
-        width: '*',
-        text: [
-            { text: 'BILLED BY\n', style: 'label' },
-            { text: checkEmpty(data.details.companyName) + '\n', style: 'h3' },
-            { text: checkEmpty(data.details.companyAddress) + '\n', style: 'normal' },
-            data.details.companyPhone ? { text: 'Ph: ' + data.details.companyPhone + '\n', style: 'normal' } : {},
-            showGst ? { text: 'GSTIN: ' + checkEmpty(data.details.companyGst), style: 'normal', color: color } : {}
+    // Propagate content for BILLED BY
+    const billedByContent = [
+        { text: 'BILLED BY', style: 'label', margin: [0, 0, 0, 2] },
+        { text: checkEmpty(data.details.companyName), style: 'h3' },
+        { text: checkEmpty(data.details.companyAddress), style: 'normal' },
+        data.details.companyPhone ? { text: 'Ph: ' + data.details.companyPhone, style: 'normal' } : {},
+        (showGst && data.details.companyGst) ? { text: 'GSTIN: ' + checkEmpty(data.details.companyGst), style: 'normal', color: color } : {}
+    ];
+
+    // Logo & Billed By Layout
+    if (data.details.logo) {
+        leftStack.push({
+            columns: [
+                {
+                    image: data.details.logo,
+                    width: 70,
+                    margin: [0, 0, 15, 0]
+                },
+                {
+                    stack: billedByContent,
+                    width: '*'
+                }
+            ]
+        });
+    } else {
+        leftStack.push({ stack: billedByContent });
+    }
+
+    // Spacer
+    leftStack.push({ text: ' ', margin: [0, 5] });
+
+    // Billed To & Invoice Details Layout
+    const billedToContent = [
+        { text: 'BILLED TO', style: 'label', margin: [0, 0, 0, 2] },
+        { text: checkEmpty(data.details.clientName), style: 'h3' },
+        { text: checkEmpty(data.details.clientAddress), style: 'normal' },
+        data.details.clientPhone ? { text: 'Ph: ' + data.details.clientPhone, style: 'normal' } : {},
+        (showGst && data.details.clientGst) ? { text: 'GSTIN: ' + checkEmpty(data.details.clientGst), style: 'normal', color: color } : {}
+    ];
+
+    let metaLabel = 'Invoice No:';
+    if (title === 'QUOTATION') metaLabel = 'Quote No:';
+    else if (title === 'DELIVERY CHALLAN') metaLabel = 'Challan No:';
+
+    const metaContent = [
+        { text: metaLabel, style: 'label', margin: [0, 0, 0, 2] },
+        { text: data.details.invoiceNumber, bold: true, margin: [0, 0, 0, 5] },
+        { text: 'Date:', style: 'label', margin: [0, 0, 0, 2] },
+        { text: data.details.date, bold: true }
+    ];
+
+    leftStack.push({
+        columns: [
+            {
+                stack: billedToContent,
+                width: '*'
+            },
+            {
+                stack: metaContent,
+                width: 'auto',
+                alignment: 'left' // Or right? User said "right of billed to", usually nice to align textual columns left relative to themselves, but maybe shift right? Left is safer for alignment with column.
+            }
         ]
     });
 
-    headerColumns.push({
-        width: '*',
-        text: [
-            { text: 'BILLED TO\n', style: 'label' },
-            { text: checkEmpty(data.details.clientName) + '\n', style: 'h3' },
-            { text: checkEmpty(data.details.clientAddress) + '\n', style: 'normal' },
-            data.details.clientPhone ? { text: 'Ph: ' + data.details.clientPhone + '\n', style: 'normal' } : {},
-            showGst ? { text: 'GSTIN: ' + checkEmpty(data.details.clientGst), style: 'normal', color: color } : {}
-        ],
-        alignment: 'right'
-    });
+    // QR Data Construction
+    let qrData = '';
+    const totalTax = (data.totals.cgst + data.totals.sgst + data.totals.igst).toFixed(2);
+
+    // Base common info (Date and Document Number)
+    const baseInfo = `Date: ${data.details.date}
+${title}: ${data.details.invoiceNumber}`;
+
+    if (title === 'TAX INVOICE') {
+        const commonInfo = `${baseInfo}
+From: ${data.details.companyName}${data.details.companyGst ? ', GST: ' + data.details.companyGst : ''}
+To: ${data.details.clientName}${data.details.clientGst ? ', GST: ' + data.details.clientGst : ''}`;
+        qrData = `${commonInfo}
+Subtotal: ${data.totals.subtotal.toFixed(2)}
+Discount: ${data.totals.discount.toFixed(2)}
+Taxable Value: ${data.totals.taxableValue.toFixed(2)}
+GST: ${totalTax}
+Total: ${data.totals.total.toFixed(2)}`;
+    } else if (title === 'INVOICE') {
+        const commonInfoNoGst = `${baseInfo}
+From: ${data.details.companyName}
+To: ${data.details.clientName}`;
+        qrData = `${commonInfoNoGst}
+Subtotal: ${data.totals.subtotal.toFixed(2)}
+Discount: ${data.totals.discount.toFixed(2)}
+Total: ${(data.totals.subtotal - data.totals.discount).toFixed(2)}`;
+    } else if (title === 'QUOTATION') {
+        const commonInfoNoGst = `${baseInfo}
+From: ${data.details.companyName}
+To: ${data.details.clientName}`;
+        qrData = `${commonInfoNoGst}
+Total: ${data.totals.subtotal.toFixed(2)}
+Disclaimer: The quoted amount does not yet include any applicable taxes.`;
+    } else if (title === 'DELIVERY CHALLAN') {
+        const challanFrom = `From: ${data.details.companyName}
+Address: ${data.details.companyAddress}`;
+        const challanTo = `To: ${data.details.clientName}
+Address: ${data.details.clientAddress}`;
+        const transportInfo = `Transport Mode: ${data.details.transportMode || 'N/A'}
+Vehicle/Ref No: ${data.details.vehicleNumber || 'N/A'}`;
+        const totalQty = data.items.reduce((sum, item) => sum + (parseFloat(item.qty) || 0), 0);
+        qrData = `${baseInfo}
+${challanFrom}
+${challanTo}
+${transportInfo}
+Total Quantity: ${totalQty}`;
+    } else {
+        qrData = baseInfo;
+    }
 
     return [
         // Top Bar
@@ -68,8 +152,20 @@ function buildHeader(data, title, color) {
 
         // Header Columns
         {
-            margin: [0, 20, 0, 20],
-            columns: headerColumns
+            margin: [0, 10, 0, 10],
+            columns: [
+                {
+                    width: '65%',
+                    stack: leftStack
+                },
+                {
+                    width: '35%',
+                    stack: [
+                        { qr: qrData, fit: 120, alignment: 'right' }
+                    ],
+                    alignment: 'right'
+                }
+            ]
         }
     ];
 }
@@ -78,7 +174,7 @@ function buildFooter(data, color) {
     return [
         // Signature & Footer
         {
-            margin: [0, 30, 0, 0],
+            margin: [0, 15, 0, 0],
             columns: [
                 { width: '*', text: '' },
                 {
@@ -93,7 +189,7 @@ function buildFooter(data, color) {
 
         // Footer Brand
         {
-            margin: [0, 30, 0, 0],
+            margin: [0, 15, 0, 0],
             text: 'Thank you for your business!',
             alignment: 'center',
             color: color,
@@ -106,25 +202,10 @@ function buildFooter(data, color) {
 function generateTaxInvoice(data) {
     const C = COLORS.TAX;
     const docDefinition = {
+        background: getWatermarkBackground(data.details.logo),
         content: [
             ...buildHeader(data, 'TAX INVOICE', C.primary),
-            // Meta Info
-            {
-                columns: [
-                    { width: '*', text: '' },
-                    {
-                        width: 'auto',
-                        table: {
-                            body: [
-                                [{ text: 'Invoice No:', style: 'label' }, { text: data.details.invoiceNumber, bold: true }],
-                                [{ text: 'Date:', style: 'label' }, { text: data.details.date, bold: true }]
-                            ]
-                        },
-                        layout: 'noBorders'
-                    }
-                ],
-                margin: [0, 0, 0, 20]
-            },
+
 
             // Table
             {
@@ -156,11 +237,11 @@ function generateTaxInvoice(data) {
                             const fill = i % 2 === 0 ? '#fff' : C.bg;
 
                             const row = [
-                                { text: item.name, fillColor: fill, margin: [5, 8, 5, 8] },
-                                { text: item.qty, fillColor: fill, margin: [5, 8, 5, 8] },
-                                { text: '₹ ' + item.rate.toFixed(2), fillColor: fill, margin: [5, 8, 5, 8] },
-                                { text: item.gst + '%', fillColor: fill, margin: [5, 8, 5, 8] },
-                                { text: '₹ ' + total.toFixed(2), alignment: 'right', fillColor: fill, margin: [5, 8, 5, 8] }
+                                { text: item.name, fillColor: fill, margin: [5, 4, 5, 4] },
+                                { text: item.qty, fillColor: fill, margin: [5, 4, 5, 4] },
+                                { text: '₹ ' + item.rate.toFixed(2), fillColor: fill, margin: [5, 4, 5, 4] },
+                                { text: item.gst + '%', fillColor: fill, margin: [5, 4, 5, 4] },
+                                { text: '₹ ' + total.toFixed(2), alignment: 'right', fillColor: fill, margin: [5, 4, 5, 4] }
                             ];
 
                             if (data.items.some(i => i.hsn)) {
@@ -180,7 +261,7 @@ function generateTaxInvoice(data) {
 
             // Amount in Words
             {
-                margin: [0, 20, 0, 0],
+                margin: [0, 10, 0, 0],
                 text: [
                     { text: 'Amount in Words:\n', style: 'label' },
                     { text: data.numberInWords, style: 'normal', italics: true }
@@ -225,6 +306,7 @@ function generateTaxInvoice(data) {
                             body: [
                                 ['Subtotal', { text: '₹ ' + data.totals.subtotal.toFixed(2), alignment: 'right' }],
                                 (data.totals.discount > 0) ? ['Discount', { text: '- ₹ ' + data.totals.discount.toFixed(2), alignment: 'right', color: 'red' }] : [],
+                                (data.totals.discount > 0) ? [{ text: 'Taxable Value', bold: true }, { text: '₹ ' + data.totals.taxableValue.toFixed(2), alignment: 'right', bold: true }] : [],
                                 ...getTaxRows(data),
                                 [{ text: 'Total', bold: true, fontSize: 12, color: C.primary }, { text: '₹ ' + data.totals.total.toFixed(2), bold: true, fontSize: 12, alignment: 'right', color: C.primary }]
                             ].filter(row => row.length > 0)
@@ -244,25 +326,10 @@ function generateTaxInvoice(data) {
 function generateSimpleInvoice(data) {
     const C = COLORS.SIMPLE;
     const docDefinition = {
+        background: getWatermarkBackground(data.details.logo),
         content: [
             ...buildHeader(data, 'INVOICE', C.primary),
-            // Meta Info
-            {
-                columns: [
-                    { width: '*', text: '' },
-                    {
-                        width: 'auto',
-                        table: {
-                            body: [
-                                [{ text: 'Invoice No:', style: 'label' }, { text: data.details.invoiceNumber, bold: true }],
-                                [{ text: 'Date:', style: 'label' }, { text: data.details.date, bold: true }]
-                            ]
-                        },
-                        layout: 'noBorders'
-                    }
-                ],
-                margin: [0, 0, 0, 20]
-            },
+
             {
                 table: {
                     headerRows: 1,
@@ -279,10 +346,10 @@ function generateSimpleInvoice(data) {
                             // Simple Invoice: Amount = Qty * Rate (No Tax)
                             const fill = i % 2 === 0 ? '#fff' : C.bg;
                             return [
-                                { text: item.name, fillColor: fill, margin: [5, 8, 5, 8] },
-                                { text: item.qty, fillColor: fill, margin: [5, 8, 5, 8] },
-                                { text: '₹ ' + item.rate.toFixed(2), fillColor: fill, margin: [5, 8, 5, 8] },
-                                { text: '₹ ' + taxable.toFixed(2), alignment: 'right', fillColor: fill, margin: [5, 8, 5, 8] }
+                                { text: item.name, fillColor: fill, margin: [5, 4, 5, 4] },
+                                { text: item.qty, fillColor: fill, margin: [5, 4, 5, 4] },
+                                { text: '₹ ' + item.rate.toFixed(2), fillColor: fill, margin: [5, 4, 5, 4] },
+                                { text: '₹ ' + taxable.toFixed(2), alignment: 'right', fillColor: fill, margin: [5, 4, 5, 4] }
                             ];
                         })
                     ]
@@ -297,7 +364,7 @@ function generateSimpleInvoice(data) {
 
             // Amount in Words
             {
-                margin: [0, 20, 0, 0],
+                margin: [0, 10, 0, 0],
                 text: [
                     { text: 'Amount in Words:\n', style: 'label' },
                     { text: data.numberInWordsSimple || data.numberInWords, style: 'normal', italics: true }
@@ -327,7 +394,7 @@ function generateSimpleInvoice(data) {
                             } : {},
                             data.details.upiId ? {
                                 stack: [
-                                    { qr: `upi://pay?pa=${data.details.upiId}&pn=${data.details.companyName}&am=${data.totals.total}&cu=INR`, fit: 70 },
+                                    { qr: `upi://pay?pa=${data.details.upiId}&pn=${data.details.companyName}&am=${(data.totals.subtotal - data.totals.discount).toFixed(2)}&cu=INR`, fit: 70 },
                                     { text: 'Scan to Pay', style: 'label', margin: [0, 5, 0, 0] },
                                     { text: data.details.upiId, style: 'normal', fontSize: 9 }
                                 ]
@@ -338,8 +405,9 @@ function generateSimpleInvoice(data) {
                         width: 'auto',
                         alignment: 'right',
                         text: [
+                            { text: `Subtotal: ₹ ${data.totals.subtotal.toFixed(2)}\n`, margin: [0, 0, 0, 2] },
                             (data.totals.discount > 0) ? { text: `Discount: - ₹ ${data.totals.discount.toFixed(2)}\n`, color: 'red', margin: [0, 0, 0, 5] } : '',
-                            { text: 'Grand Total: ', bold: true, color: C.primary },
+                            { text: 'Total: ', bold: true, color: C.primary },
                             { text: '₹ ' + (data.totals.subtotal - data.totals.discount).toFixed(2), bold: true, fontSize: 14, color: C.primary }
                         ]
                     }
@@ -356,29 +424,14 @@ function generateSimpleInvoice(data) {
 function generateDeliveryChallan(data) {
     const C = COLORS.CHALLAN;
     const docDefinition = {
+        background: getWatermarkBackground(data.details.logo),
         content: [
             ...buildHeader(data, 'DELIVERY CHALLAN', '#d39e00'), // Use darker yellow for text
             { text: '(Not for Sale)', style: 'label', alignment: 'right', margin: [0, -10, 0, 20] },
-            // Meta Info
-            {
-                columns: [
-                    { width: '*', text: '' },
-                    {
-                        width: 'auto',
-                        table: {
-                            body: [
-                                [{ text: 'Challan No:', style: 'label' }, { text: data.details.invoiceNumber, bold: true }],
-                                [{ text: 'Date:', style: 'label' }, { text: data.details.date, bold: true }]
-                            ]
-                        },
-                        layout: 'noBorders'
-                    }
-                ],
-                margin: [0, 0, 0, 20]
-            },
+
             // Transport Info (Challan Specific)
             (data.details.transportMode || data.details.vehicleNumber) ? {
-                margin: [0, 0, 0, 20],
+                margin: [0, 0, 0, 10],
                 table: {
                     widths: ['*', '*'],
                     body: [
@@ -416,14 +469,31 @@ function generateDeliveryChallan(data) {
                         ...data.items.map((item, i) => {
                             const fill = i % 2 === 0 ? '#fff' : C.bg;
                             const row = [
-                                { text: item.name, fillColor: fill, margin: [5, 8, 5, 8] },
-                                { text: item.qty, alignment: 'right', fillColor: fill, margin: [5, 8, 5, 8] }
+                                { text: item.name, fillColor: fill, margin: [5, 4, 5, 4] },
+                                { text: item.qty, alignment: 'right', fillColor: fill, margin: [5, 4, 5, 4] }
                             ];
                             if (data.items.some(i => i.hsn)) {
-                                row.splice(1, 0, { text: item.hsn, fillColor: fill, margin: [5, 8, 5, 8] });
+                                row.splice(1, 0, { text: item.hsn, fillColor: fill, margin: [5, 4, 5, 4] });
                             }
                             return row;
-                        })
+                        }),
+                        // Total Quantity Row
+                        [
+                            {
+                                text: 'Total Quantity',
+                                bold: true,
+                                alignment: 'right',
+                                colSpan: data.items.some(i => i.hsn) ? 2 : 1,
+                                margin: [5, 5, 5, 5]
+                            },
+                            ...(data.items.some(i => i.hsn) ? [{}] : []),
+                            {
+                                text: data.items.reduce((sum, item) => sum + (parseFloat(item.qty) || 0), 0),
+                                bold: true,
+                                alignment: 'right',
+                                margin: [5, 5, 5, 5]
+                            }
+                        ]
                     ]
                 },
                 layout: {
@@ -478,45 +548,14 @@ function generateQuote(data) {
         content: [
             ...buildHeader(data, 'QUOTATION', C.primary),
 
-            // Meta Info (Date/Number)
-            {
-                columns: [
-                    { width: '*', text: '' },
-                    {
-                        width: 'auto',
-                        table: {
-                            body: [
-                                [{ text: 'Quote No:', style: 'label' }, { text: data.details.invoiceNumber, bold: true }], // Reusing Invoice Number field
-                                [{ text: 'Date:', style: 'label' }, { text: data.details.date, bold: true }]
-                            ]
-                        },
-                        layout: 'noBorders'
-                    }
-                ],
-                margin: [0, 0, 0, 20]
-            },
+
 
             // Item Table (Reusing Simple Style or Tax Style? Let's use Tax Style layout but different colors)
             // Actually, Quotes often look like Tax Invoices but without the Tax Invoice title.
             // Let's use a unified approach: Use the custom table builder if possible, or manually build it.
             // For simplicity/consistency, I'll copy the Tax Invoice structure but change the header.
 
-            // Client Details Section (omitted here because it's usually part of header or just below)
-            // Wait, buildHeader only does "Billed By". Tax Invoice has "Billed To" below it.
-            {
-                margin: [0, 0, 0, 20],
-                columns: [
-                    {
-                        width: '50%',
-                        text: [
-                            // Client details directly
-                            { text: checkEmpty(data.details.clientName) + '\n', style: 'h3' },
-                            { text: checkEmpty(data.details.clientAddress) + '\n', style: 'normal' },
-                            data.details.clientPhone ? { text: 'Ph: ' + data.details.clientPhone + '\n', style: 'normal' } : {}
-                        ]
-                    }
-                ]
-            },
+
 
             // Table
             {
@@ -550,6 +589,15 @@ function generateQuote(data) {
                 }
             },
 
+            // Amount in Words
+            {
+                margin: [0, 10, 0, 0],
+                text: [
+                    { text: 'Amount in Words: ', bold: true, fontSize: 10 },
+                    { text: data.numberInWordsSimple, italics: true, fontSize: 10 } // Use Simple (no tax) words
+                ]
+            },
+
             // Payment & Totals Section
             {
                 margin: [0, 20, 0, 0],
@@ -559,26 +607,28 @@ function generateQuote(data) {
                         width: '*',
                         stack: [
                             (data.details.bankName || data.details.upiId) ? { text: 'Payment Details:', style: 'h3', fontSize: 11, margin: [0, 0, 0, 5] } : {},
-                            data.details.bankName ? {
-                                table: {
-                                    body: [
-                                        [{ text: 'Account Name:', style: 'label', width: 60 }, { text: data.details.accountName, style: 'normal', bold: true }],
-                                        [{ text: 'Bank:', style: 'label' }, { text: data.details.bankName, style: 'normal', bold: true }],
-                                        [{ text: 'A/C No:', style: 'label' }, { text: data.details.accountNumber, style: 'normal' }],
-                                        [{ text: 'IFSC:', style: 'label' }, { text: data.details.ifscCode, style: 'normal' }]
-                                    ]
-                                },
-                                layout: 'noBorders',
-                                margin: [0, 0, 0, 10]
-                            } : {},
-                            data.details.upiId ? {
-                                stack: [
-                                    // Use subtotal for Quote QR as taxes aren't applied yet
-                                    { qr: `upi://pay?pa=${data.details.upiId}&pn=${data.details.companyName}&am=${data.totals.subtotal}&cu=INR`, fit: 70 },
-                                    { text: 'Scan to Pay', style: 'label', margin: [0, 5, 0, 0] },
-                                    { text: data.details.upiId, style: 'normal', fontSize: 9 }
-                                ]
-                            } : {}
+                            (() => {
+                                const rows = [];
+                                if (data.details.bankName) {
+                                    rows.push([{ text: 'Account Name:', style: 'label', width: 60 }, { text: data.details.accountName, style: 'normal', bold: true }]);
+                                    rows.push([{ text: 'Bank:', style: 'label' }, { text: data.details.bankName, style: 'normal', bold: true }]);
+                                    rows.push([{ text: 'A/C No:', style: 'label' }, { text: data.details.accountNumber, style: 'normal' }]);
+                                    rows.push([{ text: 'IFSC:', style: 'label' }, { text: data.details.ifscCode, style: 'normal' }]);
+                                }
+                                if (data.details.upiId) {
+                                    rows.push([{ text: 'UPI ID:', style: 'label' }, { text: data.details.upiId, style: 'normal', bold: true }]);
+                                }
+                                if (rows.length > 0) {
+                                    return {
+                                        table: {
+                                            body: rows
+                                        },
+                                        layout: 'noBorders',
+                                        margin: [0, 0, 0, 10]
+                                    };
+                                }
+                                return {};
+                            })()
                         ]
                     },
                     {
@@ -596,21 +646,12 @@ function generateQuote(data) {
 
             // Disclaimer
             {
-                margin: [0, 10, 0, 0],
+                margin: [0, 5, 0, 0],
                 text: 'The quoted amount does not yet include any applicable taxes.',
                 italics: true,
-                fontSize: 9,
+                fontSize: 12,
                 alignment: 'right',
                 color: '#666'
-            },
-
-            // Amount in Words
-            {
-                margin: [0, 20, 0, 0],
-                text: [
-                    { text: 'Amount in Words: ', bold: true, fontSize: 10 },
-                    { text: data.numberInWordsSimple, italics: true, fontSize: 10 } // Use Simple (no tax) words
-                ]
             },
 
             buildNote(data),
@@ -636,14 +677,14 @@ function getStyles() {
         label: { fontSize: 9, color: '#999999', margin: [0, 0, 0, 2] },
         h3: { fontSize: 12, bold: true, margin: [0, 0, 0, 5] },
         normal: { fontSize: 10, margin: [0, 0, 0, 2] },
-        tableHeader: { bold: true, fontSize: 10, color: 'white', margin: [0, 5, 0, 5] }
+        tableHeader: { bold: true, fontSize: 10, color: 'white', margin: [0, 3, 0, 3] }
     };
 }
 
 function buildNote(data) {
     if (!data.details.note) return {};
     return {
-        margin: [0, 20, 0, 0],
+        margin: [0, 10, 0, 0],
         stack: [
             { text: 'Note:', style: 'label', bold: true },
             { text: data.details.note, style: 'normal', italics: true }
@@ -666,4 +707,22 @@ function getTaxRows(data) {
 
 function checkEmpty(str) {
     return str ? str : '';
+}
+
+function getWatermarkBackground(logo) {
+    if (!logo) return null;
+    return function (currentPage, pageSize) {
+        // Center the logo (approximate centering since we don't know exact aspect ratio)
+        // A4 width is ~595pt, height ~842pt.
+        const width = 300;
+        const x = (pageSize.width - width) / 2;
+        const y = (pageSize.height - 300) / 2; // Assuming ~square or similar aspect ratio for centering
+
+        return {
+            image: logo,
+            width: width,
+            opacity: 0.05,
+            absolutePosition: { x: x, y: y }
+        };
+    };
 }

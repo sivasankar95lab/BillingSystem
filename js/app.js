@@ -284,30 +284,24 @@ document.addEventListener('DOMContentLoaded', () => {
             const total = taxable + taxAmt;
 
             tr.innerHTML = `
-            <td>
+            <td data-label="Item Name">
                 <div class="input-group input-group-sm">
                     <input type="text" class="form-control" placeholder="Item Name" value="${item.name}" 
                         list="itemList"
                         oninput="updateItemData(${item.id}, 'name', this.value)"
                         onchange="checkAndAutoFill(${item.id}, this)">
-                    <button class="btn btn-outline-secondary" type="button" onclick="openItemModalForSelection(${item.id})" title="Pick from List">
+                    <button class="btn btn-sm btn-outline-secondary" type="button" onclick="openItemModalForSelection(${item.id})" title="Pick from List">
                         <i class="fas fa-list"></i>
                     </button>
                 </div>
             </td>
-            <td><input type="text" class="form-control form-control-sm" placeholder="HSN" value="${item.hsn}" oninput="updateItemData(${item.id}, 'hsn', this.value)"></td>
-            <td><input type="number" class="form-control form-control-sm" placeholder="Qty" value="${item.qty}" oninput="updateItemData(${item.id}, 'qty', parseFloat(this.value))"></td>
-            <td><input type="number" class="form-control form-control-sm" placeholder="Rate" value="${item.rate}" oninput="updateItemData(${item.id}, 'rate', parseFloat(this.value))"></td>
-            <td>
-                <select class="form-select form-select-sm" onchange="updateItemData(${item.id}, 'gst', parseFloat(this.value))">
-                    <option value="0" ${item.gst === 0 ? 'selected' : ''}>0%</option>
-                    <option value="5" ${item.gst === 5 ? 'selected' : ''}>5%</option>
-                    <option value="12" ${item.gst === 12 ? 'selected' : ''}>12%</option>
-                    <option value="18" ${item.gst === 18 ? 'selected' : ''}>18%</option>
-                    <option value="28" ${item.gst === 28 ? 'selected' : ''}>28%</option>
-                </select>
+            <td data-label="HSN/SAC"><input type="text" class="form-control form-control-sm" placeholder="HSN" value="${item.hsn}" oninput="updateItemData(${item.id}, 'hsn', this.value)"></td>
+            <td data-label="Qty"><input type="number" class="form-control form-control-sm" placeholder="Qty" value="${item.qty}" oninput="updateItemData(${item.id}, 'qty', parseFloat(this.value))"></td>
+            <td data-label="Rate"><input type="number" class="form-control form-control-sm" placeholder="Rate" value="${item.rate}" oninput="updateItemData(${item.id}, 'rate', parseFloat(this.value))"></td>
+            <td data-label="GST">
+                <input type="number" class="form-control form-control-sm" placeholder="GST" value="${item.gst}" list="gstRates" oninput="updateItemData(${item.id}, 'gst', parseFloat(this.value))">
             </td>
-            <td class="text-end pe-4 fw-medium row-amount">${total.toFixed(2)}</td>
+            <td data-label="Amount" class="text-end pe-4 fw-medium row-amount">${total.toFixed(2)}</td>
             <td class="text-center">
                 <button type="button" class="delete-row-btn" onclick="deleteItem(${item.id})" title="Remove Item">
                     <i class="fas fa-times"></i>
@@ -336,9 +330,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function calculateTotals() {
         let subtotal = 0;
-        let totalCGST = 0;
-        let totalSGST = 0;
-        let totalIGST = 0;
+        let initialCGST = 0;
+        let initialSGST = 0;
+        let initialIGST = 0;
 
         state.items.forEach(item => {
             const qty = item.qty || 0;
@@ -350,10 +344,10 @@ document.addEventListener('DOMContentLoaded', () => {
             subtotal += taxable;
 
             if (state.taxType === 'Same State') {
-                totalCGST += taxAmt / 2;
-                totalSGST += taxAmt / 2;
+                initialCGST += taxAmt / 2;
+                initialSGST += taxAmt / 2;
             } else {
-                totalIGST += taxAmt;
+                initialIGST += taxAmt;
             }
         });
 
@@ -370,7 +364,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (discountAmount > subtotal) discountAmount = subtotal; // Cap discount at subtotal
 
-        const grandTotal = (subtotal - discountAmount) + totalCGST + totalSGST + totalIGST;
+        // New logic: GST is calculated on Taxable Value (Subtotal - Discount)
+        const taxableValue = subtotal - discountAmount;
+
+        // Scale GST proportionally based on the discount applied to the subtotal
+        const gstFactor = subtotal > 0 ? (taxableValue / subtotal) : 0;
+
+        const totalCGST = initialCGST * gstFactor;
+        const totalSGST = initialSGST * gstFactor;
+        const totalIGST = initialIGST * gstFactor;
+
+        const grandTotal = taxableValue + totalCGST + totalSGST + totalIGST;
 
         document.getElementById('summarySubtotal').textContent = '₹' + subtotal.toFixed(2);
         document.getElementById('summaryDiscount').textContent = '- ₹' + discountAmount.toFixed(2);
@@ -378,11 +382,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('summarySGST').textContent = '₹' + totalSGST.toFixed(2);
         document.getElementById('summaryIGST').textContent = '₹' + totalIGST.toFixed(2);
         document.getElementById('summaryTotal').textContent = '₹' + grandTotal.toFixed(2);
+        document.getElementById('summaryAmountInWords').textContent = numberToWords(grandTotal);
 
         // Save to state
         state.totals = {
             subtotal: subtotal,
             discount: discountAmount,
+            taxableValue: taxableValue,
             cgst: totalCGST,
             sgst: totalSGST,
             igst: totalIGST,
@@ -463,37 +469,37 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function gatherData() {
-        const totals = state.totals || { subtotal: 0, discount: 0, cgst: 0, sgst: 0, igst: 0, total: 0 };
+        const totals = state.totals || { subtotal: 0, discount: 0, taxableValue: 0, cgst: 0, sgst: 0, igst: 0, total: 0 };
+        const getVal = (id) => document.getElementById(id)?.value || '';
+
         return {
             details: {
-                invoiceNumber: document.getElementById('invoiceNumber').value,
-                date: document.getElementById('invoiceDate').value,
-                companyName: document.getElementById('companyName').value,
-                companyGst: document.getElementById('companyGst').value,
-                companyPhone: document.getElementById('companyPhone').value,
-                companyAddress: document.getElementById('companyAddress').value,
-                clientName: document.getElementById('clientName').value,
-                clientGst: document.getElementById('clientGst').value,
-                clientPhone: document.getElementById('clientPhone').value,
-                clientAddress: document.getElementById('clientAddress').value,
+                invoiceNumber: getVal('invoiceNumber'),
+                date: getVal('invoiceDate'),
+                companyName: getVal('companyName'),
+                companyGst: getVal('companyGst'),
+                companyPhone: getVal('companyPhone'),
+                companyAddress: getVal('companyAddress'),
+                clientName: getVal('clientName'),
+                clientGst: getVal('clientGst'),
+                clientPhone: getVal('clientPhone'),
+                clientAddress: getVal('clientAddress'),
                 taxType: state.taxType,
                 logo: state.logoImage,
                 signature: state.signatureImage,
-                transportMode: document.getElementById('transportMode').value,
-                vehicleNumber: document.getElementById('vehicleNumber').value,
-                accountName: document.getElementById('accountName').value,
-                bankName: document.getElementById('bankName').value,
-                accountNumber: document.getElementById('accountNumber').value,
-                ifscCode: document.getElementById('ifscCode').value,
-                accountNumber: document.getElementById('accountNumber').value,
-                ifscCode: document.getElementById('ifscCode').value,
-                upiId: document.getElementById('upiId').value,
-                note: document.getElementById('invoiceNote').value
+                transportMode: getVal('transportMode'),
+                vehicleNumber: getVal('vehicleNumber'),
+                accountName: getVal('accountName'),
+                bankName: getVal('bankName'),
+                accountNumber: getVal('accountNumber'),
+                ifscCode: getVal('ifscCode'),
+                upiId: getVal('upiId'),
+                note: getVal('invoiceNote')
             },
             items: state.items,
             totals: totals,
             numberInWords: numberToWords(totals.total),
-            numberInWordsSimple: numberToWords(totals.subtotal - totals.discount)
+            numberInWordsSimple: numberToWords(totals.taxableValue)
         };
     }
 
@@ -704,6 +710,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const tr = document.createElement('tr');
                     fields.forEach(f => {
                         const td = document.createElement('td');
+                        td.setAttribute('data-label', f.label);
                         if (f.key === 'state') {
                             // Select for state
                             const select = document.createElement('select');
@@ -732,6 +739,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Reorder & Actions
                     const actionTd = document.createElement('td');
+                    actionTd.setAttribute('data-label', 'Actions');
                     actionTd.style.whiteSpace = 'nowrap';
                     actionTd.innerHTML = `
                          <button class="btn btn-sm btn-outline-secondary me-1" onclick="moveProfile(${index}, -1)" title="Move Up" ${index === 0 ? 'disabled' : ''}>
@@ -855,11 +863,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.items.forEach((item, index) => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td><input type="text" class="form-control form-control-sm" value="${item.name}" onchange="ItemManager.updateField(${index}, 'name', this.value)"></td>
-                        <td><input type="text" class="form-control form-control-sm" value="${item.hsn}" onchange="ItemManager.updateField(${index}, 'hsn', this.value)"></td>
-                        <td><input type="number" class="form-control form-control-sm" value="${item.rate}" onchange="ItemManager.updateField(${index}, 'rate', parseFloat(this.value))"></td>
-                        <td><input type="number" class="form-control form-control-sm" value="${item.gst}" onchange="ItemManager.updateField(${index}, 'gst', parseFloat(this.value))"></td>
-                        <td>
+                        <td data-label="Item Name"><input type="text" class="form-control form-control-sm" value="${item.name}" onchange="ItemManager.updateField(${index}, 'name', this.value)"></td>
+                        <td data-label="HSN/SAC"><input type="text" class="form-control form-control-sm" value="${item.hsn}" onchange="ItemManager.updateField(${index}, 'hsn', this.value)"></td>
+                        <td data-label="Rate"><input type="number" class="form-control form-control-sm" value="${item.rate}" onchange="ItemManager.updateField(${index}, 'rate', parseFloat(this.value))"></td>
+                        <td data-label="GST %"><input type="number" class="form-control form-control-sm" value="${item.gst}" onchange="ItemManager.updateField(${index}, 'gst', parseFloat(this.value))"></td>
+                        <td data-label="Actions">
                             <button class="btn btn-sm btn-success me-1" onclick="ItemManager.useItem(${index})">
                                 <i class="fas fa-check"></i> Use
                             </button>
@@ -1013,45 +1021,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         saveCurrent() {
             const data = gatherData();
-
-            // Extend data with state that isn't in gatherData
             const snapshot = {
                 id: Date.now(),
                 savedAt: new Date().toLocaleString(),
-                details: { ...data.details, logo: null, signature: null }, // Don't save base64 images to history/cloud to save space
+                details: { ...data.details, logo: null, signature: null }, // Don't save base64 images to history to save space
                 items: JSON.parse(JSON.stringify(state.items)),
                 totals: data.totals,
-                settings: {
-                    taxType: state.taxType,
-                    companyName: document.getElementById('companyName').value,
-                    companyAddress: document.getElementById('companyAddress').value,
-                    companyGstin: document.getElementById('companyGst').value,
-                    companyPhone: document.getElementById('companyPhone').value,
-                    companyEmail: document.getElementById('companyEmail').value,
-                    logoUrl: document.getElementById('logoUrl').value,
-                    signatureUrl: document.getElementById('signatureUrl').value,
-
-                    clientName: document.getElementById('clientName').value,
-                    clientAddress: document.getElementById('clientAddress').value,
-                    clientGstin: document.getElementById('clientGst').value,
-                    clientPhone: document.getElementById('clientPhone').value,
-                    clientEmail: document.getElementById('clientEmail').value,
-                    clientNotes: document.getElementById('clientNotes').value,
-                    clientState: document.getElementById('clientState').value,
-
-                    transportMode: document.getElementById('transportMode').value,
-                    vehicleNumber: document.getElementById('vehicleNumber').value,
-
-                    bankName: document.getElementById('bankName').value,
-                    accountName: document.getElementById('accountName').value,
-                    accountNumber: document.getElementById('accountNumber').value,
-                    ifscCode: document.getElementById('ifscCode').value,
-                    upiId: document.getElementById('upiId').value,
-
-                    discountType: document.querySelector('input[name="discountType"]:checked').value,
-                    discountValue: document.getElementById('discountValue').value
-                }
+                settings: JSON.parse(JSON.stringify(data.details)) // Use gathered details as settings
             };
+            snapshot.settings.discountType = document.querySelector('input[name="discountType"]:checked').value;
+            snapshot.settings.discountValue = document.getElementById('discountValue').value;
+
 
             // Check for duplicate Invoice Number
             const existingIndex = this.history.findIndex(inv => inv.details.invoiceNumber === data.details.invoiceNumber);
@@ -1090,11 +1070,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.history.forEach((record, index) => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>${record.savedAt}</td>
-                        <td class="fw-bold">${record.details.invoiceNumber}</td>
-                        <td>${record.details.clientName || '-'}</td>
-                        <td>₹${record.totals.total.toFixed(2)}</td>
-                        <td>
+                        <td data-label="Date Saved">${record.savedAt}</td>
+                        <td data-label="Invoice #" class="fw-bold">${record.details.invoiceNumber}</td>
+                        <td data-label="Client">${record.details.clientName || '-'}</td>
+                        <td data-label="Amount">₹${record.totals.total.toFixed(2)}</td>
+                        <td data-label="Actions">
                             <button class="btn btn-sm btn-primary me-1" onclick="InvoiceManager.load(${index})">
                                 <i class="fas fa-box-open"></i> Load
                             </button>
@@ -1192,7 +1172,7 @@ document.addEventListener('DOMContentLoaded', () => {
         textContainer: document.getElementById('syncStatusText'),
         helpModal: null,
 
-        keysToSync: ['invoice_history', 'invoice_profiles_company', 'invoice_profiles_client', 'invoice_profiles_payment', 'invoice_items_catalogue'],
+        keysToSync: ['invoice_history', 'invoice_profiles_company', 'invoice_profiles_client', 'invoice_profiles_payment', 'invoice_items_catalogue', 'error_log'],
         isOnline: true,
 
         init() {
@@ -1468,6 +1448,117 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.readAsText(file);
         }
     };
+
+    // Error Logger Implementation
+    const ErrorLogger = {
+        logs: [], // Initialize immediately
+        modal: null,
+
+        init() {
+            const modalEl = document.getElementById('viewLogsModal');
+            if (modalEl) this.modal = new bootstrap.Modal(modalEl);
+            this.load();
+            this.setupListeners();
+        },
+
+        setupListeners() {
+            window.onerror = (message, source, lineno, colno, error) => {
+                this.log({
+                    type: 'Error',
+                    message,
+                    source,
+                    line: lineno,
+                    col: colno,
+                    stack: error ? error.stack : null
+                });
+            };
+
+            window.onunhandledrejection = (event) => {
+                this.log({
+                    type: 'Unhandled Rejection',
+                    message: event.reason ? (event.reason.message || event.reason) : 'Unknown reason',
+                    reason: event.reason
+                });
+            };
+        },
+
+        log(detail) {
+            const entry = {
+                timestamp: new Date().toISOString(),
+                ...detail
+            };
+            if (!Array.isArray(this.logs)) this.logs = [];
+            this.logs.unshift(entry);
+            if (this.logs.length > 100) this.logs.pop();
+            this.save();
+        },
+
+        load() {
+            try {
+                const data = localStorage.getItem('error_log');
+                const parsed = data ? JSON.parse(data) : [];
+                this.logs = Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                console.error('Failed to load logs:', e);
+                this.logs = [];
+            }
+        },
+
+        save() {
+            try {
+                localStorage.setItem('error_log', JSON.stringify(this.logs));
+            } catch (e) {
+                console.error('Failed to save logs:', e);
+            }
+        },
+
+        open() {
+            this.load();
+            const content = document.getElementById('logsContent');
+            if (!content) return;
+
+            if (this.logs.length === 0) {
+                content.textContent = 'No logs found.';
+            } else {
+                content.textContent = this.logs.map(log => {
+                    return `[${log.timestamp}] ${log.type}: ${log.message}\n` +
+                        (log.source ? `Source: ${log.source}:${log.line}:${log.col}\n` : '') +
+                        (log.stack ? `Stack: ${log.stack}\n` : '') +
+                        '--------------------------------------------';
+                }).join('\n\n');
+            }
+            if (this.modal) this.modal.show();
+        },
+
+        download() {
+            if (this.logs.length === 0) {
+                alert('No logs to download.');
+                return;
+            }
+            const text = this.logs.map(log => JSON.stringify(log, null, 2)).join('\n\n---\n\n');
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `invoice-error-log-${new Date().toISOString()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        },
+
+        clear() {
+            if (confirm('Are you sure you want to clear all error logs?')) {
+                this.logs = [];
+                this.save();
+                this.open(); // Refresh view
+            }
+        }
+    };
+
+    // Initialize Error Logger
+    ErrorLogger.init();
+    window.ErrorLogger = ErrorLogger;
 
     // Initialize Data Manager
     DataManager.init();

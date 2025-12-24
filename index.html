@@ -4,12 +4,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Invoice Generator</title>
+    <meta name="description"
+        content="A professional, free, and easy-to-use Indian Invoice Generator. Compliant with GST standards, supporting Tax Invoices, Simple Invoices, Delivery Challans, and Quotations.">
+    <meta name="keywords"
+        content="Invoice Generator, GST Invoice, Indian Taxation, Tax Invoice, Delivery Challan, Quotation, PDF Invoice, Free Billing Software">
+    <meta name="author" content="InvoiceGenerator">
+    <meta name="theme-color" content="#2563eb">
 
-    <!-- Google Fonts: Roboto -->
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://invoice-generator.pages.dev/">
+    <meta property="og:title" content="Invoice Generator - Free GST Compliant Billing">
+    <meta property="og:description"
+        content="Generate professional GST-compliant invoices, challans, and quotes in seconds. Secure, fast, and completely free.">
+    <meta property="og:image" content="https://i.ibb.co/5XvB03Hm/logosmallsize.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://invoice-generator.pages.dev/">
+    <meta property="twitter:title" content="Invoice Generator - Free GST Compliant Billing">
+    <meta property="twitter:description"
+        content="Generate professional GST-compliant invoices, challans, and quotes in seconds. Secure, fast, and completely free.">
+    <meta property="twitter:image" content="https://i.ibb.co/5XvB03Hm/logosmallsize.png">
+
+    <title>Invoice Generator | Professional GST Billing Software</title>
+
+    <!-- Manifest & PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://i.ibb.co/5XvB03Hm/logosmallsize.png">
+
+    <!-- Favicon: Rupee Symbol -->
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22 fill=%22%232563eb%22>₹</text></svg>">
+
+    <!-- Google Fonts: Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -26,8 +57,9 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm border-bottom">
         <div class="container-fluid">
             <a class="navbar-brand d-flex align-items-center" href="#">
-                <i class="fas fa-file-invoice text-primary me-2"></i>
-                <span class="fw-bold tracking-tight text-dark">Invoice<span class="text-primary">Generator</span></span>
+                <i class="fas fa-file-invoice text-primary me-2 fs-4"></i>
+                <span class="fw-bold tracking-tight text-dark h4 mb-0">Invoice<span
+                        class="text-primary">Generator</span></span>
             </a>
 
             <div class="d-flex align-items-center gap-3">
@@ -66,6 +98,12 @@
                         <li><a class="dropdown-item" href="#" onclick="DataManager.importData(); return false;">
                                 <i class="fas fa-upload me-2"></i>Import Data
                             </a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="ErrorLogger.open(); return false;">
+                                <i class="fas fa-exclamation-circle me-2"></i>View Error Logs
+                            </a></li>
                     </ul>
                 </div>
             </div>
@@ -80,27 +118,30 @@
                     <h5 class="modal-title"><i class="fas fa-database me-2"></i>Setup Cloud Backup</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <p>To enable cloud backup, you need to create a table in your Supabase project.</p>
-                    <ol>
-                        <li>Go to your <a href="https://supabase.com/dashboard" target="_blank">Supabase Dashboard</a>.
-                        </li>
-                        <li>Open the <strong>SQL Editor</strong>.</li>
-                        <li>Copy and run the following command:</li>
-                    </ol>
-                    <div class="bg-light p-3 rounded border mb-3 position-relative">
-                        <pre class="mb-0 small"><code>create table if not exists user_data (
+                <div class="modal-body p-0">
+                    <div class="modal-scroll-area">
+                        <p>To enable cloud backup, you need to create a table in your Supabase project.</p>
+                        <ol>
+                            <li>Go to your <a href="https://supabase.com/dashboard" target="_blank">Supabase
+                                    Dashboard</a>.
+                            </li>
+                            <li>Open the <strong>SQL Editor</strong>.</li>
+                            <li>Copy and run the following command:</li>
+                        </ol>
+                        <div class="bg-light p-3 rounded border mb-3 position-relative">
+                            <pre class="mb-0 small"><code>create table if not exists user_data (
   key text primary key,
   value jsonb,
   updated_at timestamp with time zone default timezone('utc'::text, now())
 );
 alter table user_data enable row level security;
 create policy "Allow generic access" on user_data for all using (true) with check (true);</code></pre>
-                        <button class="btn btn-sm btn-outline-primary position-absolute top-0 end-0 m-2"
-                            onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent); this.textContent = 'Copied!'; setTimeout(()=>this.textContent='Copy', 2000);">Copy</button>
-                    </div>
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i> Once created, refresh this page to connect.
+                            <button class="btn btn-sm btn-outline-primary position-absolute top-0 end-0 m-2"
+                                onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent); this.textContent = 'Copied!'; setTimeout(()=>this.textContent='Copy', 2000);">Copy</button>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> Once created, refresh this page to connect.
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -118,15 +159,16 @@ create policy "Allow generic access" on user_data for all using (true) with chec
                     <h5 class="modal-title"><i class="fas fa-database me-2"></i>Local Database Contents</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        This shows all data stored in your browser's local storage. You can export this data as a
-                        backup.
-                    </div>
-                    <div id="databaseContent" class="bg-light p-3 rounded border"
-                        style="max-height: 500px; overflow-y: auto;">
-                        <pre class="mb-0"><code id="databaseJson">Loading...</code></pre>
+                <div class="modal-body p-0">
+                    <div class="modal-scroll-area">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            This shows all data stored in your browser's local storage. You can export this data as a
+                            backup.
+                        </div>
+                        <div id="databaseContent" class="p-3 rounded border bg-light">
+                            <pre class="mb-0"><code id="databaseJson">Loading...</code></pre>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -218,7 +260,8 @@ create policy "Allow generic access" on user_data for all using (true) with chec
                                     <hr class="my-3">
 
                                     <!-- Logo Section (Moved) -->
-                                    <h6 class="mb-3 text-secondary">Company Logo</h6>
+                                    <h6 class="mb-3 text-secondary">Company Logo <span
+                                            class="text-muted small fw-normal">(Rec: 550x550px PNG)</span></h6>
                                     <div class="mb-3">
                                         <div class="form-check form-check-inline">
                                             <input class="form-check-input" type="radio" name="logoOption"
@@ -250,7 +293,8 @@ create policy "Allow generic access" on user_data for all using (true) with chec
                                     <hr class="my-3">
 
                                     <!-- Signature Section (Moved) -->
-                                    <h6 class="mb-3 text-secondary">Authorized Signature</h6>
+                                    <h6 class="mb-3 text-secondary">Authorized Signature <span
+                                            class="text-muted small fw-normal">(Rec: 400x150px PNG)</span></h6>
                                     <div class="mb-3">
                                         <div class="form-check form-check-inline">
                                             <input class="form-check-input" type="radio" name="signatureOption"
@@ -435,7 +479,7 @@ create policy "Allow generic access" on user_data for all using (true) with chec
                             </div>
 
                             <!-- Buttons Footer -->
-                            <div class="p-3 border-top bg-light d-flex justify-content-start gap-2">
+                            <div class="p-4 border-top bg-light d-flex justify-content-start gap-3">
                                 <button type="button" class="btn btn-primary" id="addItemBtn">
                                     <i class="fas fa-plus me-1"></i>Add Item
                                 </button>
@@ -462,8 +506,8 @@ create policy "Allow generic access" on user_data for all using (true) with chec
                 <!-- Sidebar Summary -->
                 <div class="col-lg-4">
                     <div class="card shadow-sm border-0 mb-4 sticky-top" style="top: 20px; z-index: 100;">
-                        <div class="card-body">
-                            <h5 class="card-title mb-4">Summary</h5>
+                        <div class="card-body p-4">
+                            <h5 class="card-title mb-4 fw-bold">Summary</h5>
 
                             <!-- Discount Section -->
                             <div class="mb-3">
@@ -518,6 +562,11 @@ create policy "Allow generic access" on user_data for all using (true) with chec
                                 <span class="h5 mb-0 text-primary" id="summaryTotal">₹0.00</span>
                             </div>
 
+                            <div class="mb-4 small text-muted text-end" id="summaryAmountInWordsRow">
+                                <span id="summaryAmountInWords" class="fst-italic text-secondary">Zero Rupees
+                                    Only</span>
+                            </div>
+
                             <div class="d-grid gap-2">
                                 <button type="button" class="btn btn-primary py-2" id="btnTaxInvoice">
                                     <i class="fas fa-file-invoice me-2"></i>Download Tax Invoice
@@ -551,27 +600,36 @@ create policy "Allow generic access" on user_data for all using (true) with chec
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-0">
-                    <div class="p-3 bg-light border-bottom">
-                        <button class="btn btn-primary btn-sm" id="addProfileRowBtn">
-                            <i class="fas fa-plus me-1"></i> Add New Row
-                        </button>
-                        <span class="text-muted small ms-2">Click on a cell to edit. Changes are auto-saved.</span>
+                    <div
+                        class="p-3 bg-light border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div>
+                            <button class="btn btn-primary btn-sm" id="addProfileRowBtn">
+                                <i class="fas fa-plus me-1"></i> Add New Row
+                            </button>
+                            <span class="text-muted small ms-2">Click on a cell to edit.</span>
+                        </div>
+                        <div class="text-muted small">
+                            <i class="fas fa-info-circle text-primary me-1"></i>
+                            <strong>Logo:</strong> 550x550px | <strong>Signature:</strong> 400x150px (Transparent PNG)
+                        </div>
                     </div>
-                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-                        <table class="table table-striped table-hover mb-0 align-middle">
-                            <thead class="table-light sticky-top" style="z-index: 1;">
-                                <tr id="profileTableHeader">
-                                    <!-- Dynamic Headers -->
-                                </tr>
-                            </thead>
-                            <tbody id="profileTableBody">
-                                <!-- Dynamic Rows -->
-                            </tbody>
-                        </table>
-                    </div>
-                    <div id="profileEmptyState" class="text-center py-5 text-muted d-none">
-                        <i class="fas fa-folder-open fa-3x mb-3 opacity-50"></i>
-                        <p>No profiles found. Add a row to get started.</p>
+                    <div class="modal-scroll-area">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 align-middle">
+                                <thead>
+                                    <tr id="profileTableHeader">
+                                        <!-- Dynamic Headers -->
+                                    </tr>
+                                </thead>
+                                <tbody id="profileTableBody">
+                                    <!-- Dynamic Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="profileEmptyState" class="text-center py-5 text-muted d-none">
+                            <i class="fas fa-folder-open fa-3x mb-3 opacity-50"></i>
+                            <p>No profiles found. Add a row to get started.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -580,6 +638,13 @@ create policy "Allow generic access" on user_data for all using (true) with chec
 
     <!-- Item DataList -->
     <datalist id="itemList"></datalist>
+    <datalist id="gstRates">
+        <option value="0">
+        <option value="5">
+        <option value="12">
+        <option value="18">
+        <option value="28">
+    </datalist>
 
     <!-- Item Manager Modal -->
     <div class="modal fade" id="itemModal" tabindex="-1" aria-hidden="true">
@@ -589,31 +654,36 @@ create policy "Allow generic access" on user_data for all using (true) with chec
                     <h5 class="modal-title">Manage Predefined Items</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
-                            <thead>
-                                <tr class="bg-light">
-                                    <th>Item Name</th>
-                                    <th>HSN/SAC</th>
-                                    <th>Rate</th>
-                                    <th>GST %</th>
-                                    <th style="width: 150px;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="itemTableBody">
-                                <!-- Dynamic Rows -->
-                            </tbody>
-                        </table>
+                <div class="modal-body p-0">
+                    <div class="modal-scroll-area">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Item Name</th>
+                                        <th>HSN/SAC</th>
+                                        <th>Rate</th>
+                                        <th>GST %</th>
+                                        <th style="width: 150px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemTableBody">
+                                    <!-- Dynamic Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="itemEmptyState" class="text-center py-4 text-muted">
+                            No items found. Add items to list or type in invoice to auto-save.
+                        </div>
                     </div>
-                    <div id="itemEmptyState" class="text-center py-4 text-muted">
-                        No items found. Add items to list or type in invoice to auto-save.
-                    </div>
-                    <button class="btn btn-sm btn-primary mt-2" onclick="ItemManager.addRow()">
+                </div>
+                <div class="modal-footer justify-content-start">
+                    <button class="btn btn-primary" onclick="ItemManager.addRow()">
                         <i class="fas fa-plus me-1"></i>Add New Item
                     </button>
                     <!-- Hidden input to track if we are picking for a specific row -->
                     <input type="hidden" id="targetRowId" value="">
+                    <button type="button" class="btn btn-secondary ms-auto" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -627,24 +697,59 @@ create policy "Allow generic access" on user_data for all using (true) with chec
                     <h5 class="modal-title">Invoice History</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr class="bg-light">
-                                    <th>Date Saved</th>
-                                    <th>Invoice #</th>
-                                    <th>Client</th>
-                                    <th>Amount</th>
-                                    <th style="width: 150px;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="historyTableBody"></tbody>
-                        </table>
+                <div class="modal-body p-0">
+                    <div class="modal-scroll-area">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date Saved</th>
+                                        <th>Invoice #</th>
+                                        <th>Client</th>
+                                        <th>Amount</th>
+                                        <th style="width: 150px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historyTableBody"></tbody>
+                            </table>
+                        </div>
+                        <div id="historyEmptyState" class="text-center py-4 text-muted">
+                            No saved invoices found.
+                        </div>
                     </div>
-                    <div id="historyEmptyState" class="text-center py-4 text-muted">
-                        No saved invoices found.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Logs Modal -->
+    <div class="modal fade" id="viewLogsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Application
+                        Error Logs</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="modal-scroll-area">
+                        <div id="logsContent" class="p-3 rounded border bg-dark text-light font-monospace small"
+                            style="min-height: 200px; white-space: pre-wrap;">
+                            No logs found.
+                        </div>
                     </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-primary" onclick="ErrorLogger.download()">
+                        <i class="fas fa-file-download me-1"></i>Download as .txt
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" onclick="ErrorLogger.clear()">
+                        <i class="fas fa-trash me-1"></i>Clear Logs
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -654,12 +759,25 @@ create policy "Allow generic access" on user_data for all using (true) with chec
     <input type="file" id="importFileInput" accept=".json" style="display: none;">
 
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/pdf-builder.js"></script>
-    <script src="js/app.js?v=1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="js/pdf-builder.js" defer></script>
+    <script src="js/app.js?v=1" defer></script>
+
+    <script>
+        // Register Service Worker for PWA (Only if on HTTPS or Localhost)
+        if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('SW Registered'))
+                    .catch(err => console.log('SW Registration Failed', err));
+            });
+        } else {
+            console.log('SW Registration skipped: Not on a secure origin or running locally via file://');
+        }
+    </script>
 </body>
 
 </html>

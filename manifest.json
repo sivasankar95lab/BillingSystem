@@ -1,6 +1,6 @@
 {
   "name": "Invoice Generator",
-  "short_name": "Invoicer",
+  "short_name": "Invoice Generator",
   "description": "Professional GST-Compliant Invoice Generator",
   "start_url": ".",
   "display": "standalone",
@@ -8,12 +8,12 @@
   "theme_color": "#2563eb",
   "icons": [
     {
-      "src": "https://i.ibb.co/5XvB03Hm/logosmallsize.png",
+      "src": "img/192x192f.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://i.ibb.co/5XvB03Hm/logosmallsize.png",
+      "src": "img/512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }

@@ -1578,4 +1578,77 @@ document.addEventListener('DOMContentLoaded', () => {
     DataManager.init();
     window.DataManager = DataManager;
 
+    // ============================================
+    // DARK MODE TOGGLE IMPLEMENTATION
+    // ============================================
+    const DarkModeManager = {
+        body: document.querySelector('body'),
+        btn: document.getElementById('themeToggleBtn'),
+        icon: document.querySelector('.theme-toggle-btn__icon'),
+        storageKey: 'invoiceGeneratorDarkMode',
+
+        init() {
+            if (!this.btn || !this.icon) {
+                console.warn('Dark mode toggle elements not found');
+                return;
+            }
+
+            // Load saved preference
+            this.load();
+
+            // Add click event listener
+            this.btn.addEventListener('click', () => this.toggle());
+        },
+
+        store(value) {
+            localStorage.setItem(this.storageKey, value);
+        },
+
+        load() {
+            const darkmode = localStorage.getItem(this.storageKey);
+
+            if (!darkmode) {
+                // First time - default to light mode
+                this.store('false');
+                this.icon.classList.add('fa-sun');
+            } else if (darkmode === 'true') {
+                // Dark mode is enabled
+                this.body.classList.add('darkmode');
+                this.icon.classList.add('fa-moon');
+            } else {
+                // Light mode
+                this.icon.classList.add('fa-sun');
+            }
+        },
+
+        toggle() {
+            // Toggle dark mode class
+            this.body.classList.toggle('darkmode');
+
+            // Add animation
+            this.icon.classList.add('animated');
+
+            // Save state
+            this.store(this.body.classList.contains('darkmode'));
+
+            // Update icon
+            if (this.body.classList.contains('darkmode')) {
+                this.icon.classList.remove('fa-sun');
+                this.icon.classList.add('fa-moon');
+            } else {
+                this.icon.classList.remove('fa-moon');
+                this.icon.classList.add('fa-sun');
+            }
+
+            // Remove animation after it completes
+            setTimeout(() => {
+                this.icon.classList.remove('animated');
+            }, 500);
+        }
+    };
+
+    // Initialize Dark Mode Manager
+    DarkModeManager.init();
+    window.DarkModeManager = DarkModeManager;
+
 });

@@ -18,6 +18,21 @@
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Dark Mode Colors - Optimized for Better Visibility */
+    --dark-bg-page: linear-gradient(135deg, #1e2139 0%, #232741 100%);
+    --dark-bg-card: rgba(42, 45, 66, 0.95);
+    --dark-border-color: #3e4157;
+    --dark-text-main: #f0f0f0;
+    --dark-text-muted: #b8b8c0;
+    --dark-input-bg: #2d3048;
+    --dark-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --dark-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    --dark-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+
+    /* Toggle Button Colors */
+    --toggle-light-icon: #FFDE59;
+    --toggle-dark-icon: #fff;
 }
 
 body {
@@ -491,4 +506,792 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
+}
+
+/* -------------- THEME TOGGLE BUTTON -------------- */
+.theme-toggle-btn {
+    background-color: #fff;
+    width: 60px;
+    height: 32px;
+    border-radius: 50px;
+    padding: 0 3px;
+    box-shadow: inset 0 4px 30px rgba(0, 0, 0, 0.1),
+        inset 0 4px 4px rgba(0, 0, 0, 0.1),
+        inset 0 -2px 2px rgba(0, 0, 0, 0.1);
+    position: relative;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.theme-toggle-btn:hover {
+    transform: scale(1.05);
+}
+
+.theme-toggle-btn__indicator {
+    background-color: #fff;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    position: absolute;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.theme-toggle-btn__icon-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.theme-toggle-btn__icon {
+    color: var(--toggle-light-icon);
+    font-size: 1rem;
+}
+
+.theme-toggle-btn__icon.animated {
+    animation: spin 0.5s;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* -------------- DARK MODE STYLES -------------- */
+/* Complete Dark Mode Implementation - Optimized for Maximum Readability */
+
+/* ===== BASE STYLES ===== */
+body.darkmode {
+    background: linear-gradient(135deg, #1e2139 0%, #232741 100%);
+    background-attachment: fixed;
+    color: #f0f0f0 !important;
+}
+
+/* ===== TYPOGRAPHY ===== */
+/* All Headings */
+body.darkmode h1,
+body.darkmode h2,
+body.darkmode h3,
+body.darkmode h4,
+body.darkmode h5,
+body.darkmode h6,
+body.darkmode .h1,
+body.darkmode .h2,
+body.darkmode .h3,
+body.darkmode .h4,
+body.darkmode .h5,
+body.darkmode .h6 {
+    color: #f0f0f0 !important;
+}
+
+/* Text Elements */
+body.darkmode p,
+body.darkmode span,
+body.darkmode div,
+body.darkmode li,
+body.darkmode td,
+body.darkmode th {
+    color: #f0f0f0;
+}
+
+/* Labels and Form Text */
+body.darkmode label,
+body.darkmode .form-label,
+body.darkmode .form-text {
+    color: #c0c0c8 !important;
+}
+
+/* Small Text */
+body.darkmode small,
+body.darkmode .small {
+    color: #b8b8c0 !important;
+}
+
+/* Text Utilities Override */
+body.darkmode .text-dark {
+    color: #f0f0f0 !important;
+}
+
+body.darkmode .text-body {
+    color: #f0f0f0 !important;
+}
+
+body.darkmode .text-muted {
+    color: #b8b8c0 !important;
+}
+
+body.darkmode .text-secondary {
+    color: #b8b8c0 !important;
+}
+
+body.darkmode .text-primary {
+    color: #6b9aff !important;
+}
+
+body.darkmode .fw-bold,
+body.darkmode .fw-medium {
+    color: #f0f0f0 !important;
+}
+
+/* ===== NAVBAR ===== */
+body.darkmode .navbar {
+    background: rgba(42, 45, 66, 0.95) !important;
+    border-bottom: 1px solid #3e4157;
+}
+
+body.darkmode .navbar-brand,
+body.darkmode .navbar-brand * {
+    color: #f0f0f0 !important;
+}
+
+body.darkmode .navbar * {
+    color: #f0f0f0;
+}
+
+/* Sync/Backup Status Indicators */
+body.darkmode #syncActivity {
+    color: #f0f0f0 !important;
+}
+
+body.darkmode #syncActivity .text-secondary {
+    color: #b8b8c0 !important;
+}
+
+body.darkmode #syncIcon {
+    color: #f0f0f0 !important;
+}
+
+body.darkmode #syncStatusText {
+    background-color: #2d3048 !important;
+    color: #f0f0f0 !important;
+    border-color: #3e4157 !important;
+}
+
+body.darkmode #syncStatusText .text-secondary {
+    color: #f0f0f0 !important;
+}
+
+body.darkmode #syncText {
+    color: #f0f0f0 !important;
+}
+
+/* Sync status color variants */
+body.darkmode #syncStatusText.bg-success {
+    background-color: #10b981 !important;
+    color: #ffffff !important;
+    border-color: #10b981 !important;
+}
+
+body.darkmode #syncStatusText.bg-warning {
+    background-color: #f59e0b !important;
+    color: #ffffff !important;
+    border-color: #f59e0b !important;
+}
+
+body.darkmode #syncStatusText.bg-danger {
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+    border-color: #ef4444 !important;
+}
+
+body.darkmode #syncStatusText.bg-info {
+    background-color: #0ea5e9 !important;
+    color: #ffffff !important;
+    border-color: #0ea5e9 !important;
+}
+
+/* ===== CARDS ===== */
+body.darkmode .card {
+    background: rgba(42, 45, 66, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid #3e4157;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important;
+    color: #f0f0f0;
+}
+
+body.darkmode .card:hover {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.darkmode .card-header {
+    background-color: rgba(50, 53, 75, 0.9);
+    border-bottom: 1px solid #3e4157;
+    color: #f0f0f0;
+}
+
+body.darkmode .card-title,
+body.darkmode .card-header h1,
+body.darkmode .card-header h2,
+body.darkmode .card-header h3,
+body.darkmode .card-header h4,
+body.darkmode .card-header h5,
+body.darkmode .card-header h6 {
+    color: #f0f0f0 !important;
+}
+
+body.darkmode .card-body {
+    color: #f0f0f0;
+}
+
+/* ===== BACKGROUNDS ===== */
+body.darkmode .bg-white {
+    background-color: rgba(42, 45, 66, 0.95) !important;
+}
+
+body.darkmode .bg-light {
+    background-color: #2d3048 !important;
+}
+
+/* ===== FORMS & INPUTS ===== */
+body.darkmode .form-control,
+body.darkmode .form-select,
+body.darkmode input,
+body.darkmode textarea,
+body.darkmode select {
+    background-color: #2d3048 !important;
+    border-color: #3e4157 !important;
+    color: #f0f0f0 !important;
+}
+
+body.darkmode .form-control:focus,
+body.darkmode .form-select:focus,
+body.darkmode input:focus,
+body.darkmode textarea:focus,
+body.darkmode select:focus {
+    background-color: #2d3048 !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2) !important;
+    color: #f0f0f0 !important;
+}
+
+body.darkmode .form-control:disabled,
+body.darkmode .form-select:disabled {
+    background-color: #1e2139 !important;
+    color: #808090 !important;
+}
+
+/* Placeholder Text */
+body.darkmode ::placeholder,
+body.darkmode .form-control::placeholder,
+body.darkmode .form-select::placeholder,
+body.darkmode input::placeholder,
+body.darkmode textarea::placeholder {
+    color: #9090a0 !important;
+    opacity: 1 !important;
+}
+
+/* Input Groups */
+body.darkmode .input-group-text {
+    background-color: #2d3048;
+    border-color: #3e4157;
+    color: #f0f0f0;
+}
+
+/* Form Check (Radio/Checkbox) */
+body.darkmode .form-check-input {
+    background-color: #2d3048;
+    border-color: #3e4157;
+}
+
+body.darkmode .form-check-input:checked {
+    background-color: #2563eb;
+    border-color: #2563eb;
+}
+
+body.darkmode .form-check-label {
+    color: #f0f0f0 !important;
+}
+
+/* ===== TABLES ===== */
+body.darkmode table {
+    color: #f0f0f0;
+}
+
+body.darkmode table th {
+    background-color: #2d3048 !important;
+    color: #c0c0c8 !important;
+    border-bottom: 2px solid #3e4157 !important;
+}
+
+body.darkmode table td {
+    border-bottom: 1px solid #3e4157;
+    color: #f0f0f0 !important;
+}
+
+body.darkmode .table-hover tbody tr:hover {
+    background-color: rgba(50, 53, 75, 0.6);
+}
+
+/* Table Inputs */
+body.darkmode #itemsTable .form-control,
+body.darkmode #itemsTable .form-select {
+    border: 1px solid transparent;
+    background-color: rgba(45, 48, 72, 0.5) !important;
+    color: #f0f0f0 !important;
+}
+
+body.darkmode #itemsTable .form-control::placeholder {
+    color: #9090a0 !important;
+    opacity: 1 !important;
+}
+
+body.darkmode #itemsTable .form-control:hover,
+body.darkmode #itemsTable .form-select:hover {
+    background-color: rgba(50, 53, 75, 0.9) !important;
+    border-color: #3e4157;
+}
+
+body.darkmode #itemsTable .form-control:focus,
+body.darkmode #itemsTable .form-select:focus {
+    background-color: #2d3048 !important;
+    border-color: #2563eb !important;
+    color: #f0f0f0 !important;
+}
+
+/* Ensure input text is always visible */
+body.darkmode #itemsTable input[type="text"],
+body.darkmode #itemsTable input[type="number"] {
+    color: #f0f0f0 !important;
+}
+
+/* Amount column - ensure it's always visible */
+body.darkmode #itemsTable td:last-child,
+body.darkmode #itemsTable td[style*="text-align: right"] {
+    color: #f0f0f0 !important;
+    font-weight: 500;
+}
+
+/* Ensure all spans in items table are visible */
+body.darkmode #itemsTable span {
+    color: #f0f0f0 !important;
+}
+
+/* Items table card background */
+body.darkmode #itemsTable {
+    background-color: transparent;
+}
+
+/* ===== TBODY #itemsBody SPECIFIC STYLES ===== */
+/* Ensure all content in itemsBody is visible */
+body.darkmode #itemsBody {
+    background-color: transparent;
+}
+
+body.darkmode #itemsBody tr {
+    background-color: transparent;
+    border-bottom: 1px solid #3e4157;
+}
+
+body.darkmode #itemsBody tr:hover {
+    background-color: rgba(50, 53, 75, 0.4);
+}
+
+body.darkmode #itemsBody td {
+    color: #f0f0f0 !important;
+    border-bottom: 1px solid #3e4157;
+    background-color: transparent;
+}
+
+/* All inputs in itemsBody */
+body.darkmode #itemsBody input,
+body.darkmode #itemsBody select,
+body.darkmode #itemsBody .form-control,
+body.darkmode #itemsBody .form-select {
+    background-color: rgba(45, 48, 72, 0.5) !important;
+    color: #f0f0f0 !important;
+    border: 1px solid transparent !important;
+}
+
+body.darkmode #itemsBody input::placeholder,
+body.darkmode #itemsBody .form-control::placeholder {
+    color: #9090a0 !important;
+    opacity: 1 !important;
+}
+
+body.darkmode #itemsBody input:hover,
+body.darkmode #itemsBody select:hover,
+body.darkmode #itemsBody .form-control:hover,
+body.darkmode #itemsBody .form-select:hover {
+    background-color: rgba(50, 53, 75, 0.9) !important;
+    border-color: #3e4157 !important;
+}
+
+body.darkmode #itemsBody input:focus,
+body.darkmode #itemsBody select:focus,
+body.darkmode #itemsBody .form-control:focus,
+body.darkmode #itemsBody .form-select:focus {
+    background-color: #2d3048 !important;
+    border-color: #2563eb !important;
+    color: #f0f0f0 !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2) !important;
+}
+
+/* All text elements in itemsBody */
+body.darkmode #itemsBody span,
+body.darkmode #itemsBody div,
+body.darkmode #itemsBody p {
+    color: #f0f0f0 !important;
+}
+
+/* Delete button in itemsBody */
+body.darkmode #itemsBody .delete-row-btn {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.15);
+}
+
+body.darkmode #itemsBody .delete-row-btn:hover {
+    background: #ef4444;
+    color: #fff;
+}
+
+/* Amount column in itemsBody */
+body.darkmode #itemsBody td:last-child {
+    color: #f0f0f0 !important;
+    font-weight: 600;
+}
+
+/* ===== BUTTONS ===== */
+body.darkmode .btn {
+    color: #f0f0f0;
+    border-color: #3e4157;
+}
+
+body.darkmode .btn-primary {
+    background-color: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff !important;
+}
+
+body.darkmode .btn-primary:hover {
+    background-color: #1d4ed8;
+    border-color: #1d4ed8;
+}
+
+body.darkmode .btn-success {
+    background-color: #10b981;
+    border-color: #10b981;
+    color: #ffffff !important;
+}
+
+body.darkmode .btn-danger {
+    background-color: #ef4444;
+    border-color: #ef4444;
+    color: #ffffff !important;
+}
+
+body.darkmode .btn-warning {
+    background-color: #f59e0b;
+    border-color: #f59e0b;
+    color: #ffffff !important;
+}
+
+body.darkmode .btn-info {
+    background-color: #0ea5e9;
+    border-color: #0ea5e9;
+    color: #ffffff !important;
+}
+
+body.darkmode .btn-outline-primary,
+body.darkmode .btn-outline-secondary,
+body.darkmode .btn-outline-success,
+body.darkmode .btn-outline-danger {
+    color: #f0f0f0;
+    border-color: #3e4157;
+}
+
+body.darkmode .btn-outline-primary:hover,
+body.darkmode .btn-outline-secondary:hover,
+body.darkmode .btn-outline-success:hover {
+    background-color: #2d3048;
+    border-color: #2563eb;
+    color: #f0f0f0;
+}
+
+body.darkmode .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Delete Button */
+body.darkmode .delete-row-btn {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.15);
+}
+
+body.darkmode .delete-row-btn:hover {
+    background: #ef4444;
+    color: #fff;
+}
+
+/* ===== MODALS ===== */
+body.darkmode .modal-content {
+    background-color: rgba(42, 45, 66, 0.98);
+    border: 1px solid #3e4157;
+    color: #f0f0f0;
+}
+
+body.darkmode .modal-header {
+    background-color: rgba(50, 53, 75, 0.9);
+    border-bottom: 1px solid #3e4157;
+}
+
+body.darkmode .modal-title {
+    color: #f0f0f0 !important;
+}
+
+body.darkmode .modal-body {
+    color: #f0f0f0;
+}
+
+body.darkmode .modal-footer {
+    background-color: rgba(50, 53, 75, 0.85);
+    border-top: 1px solid #3e4157;
+}
+
+/* Modal Tables */
+body.darkmode .modal-body thead th {
+    background-color: #2d3048 !important;
+    color: #c0c0c8 !important;
+    border-bottom: 2px solid #3e4157 !important;
+}
+
+body.darkmode .modal-body td {
+    background-color: rgba(42, 45, 66, 0.95);
+    border-bottom: 1px solid #3e4157;
+    color: #f0f0f0 !important;
+}
+
+/* ===== DROPDOWNS ===== */
+body.darkmode .dropdown-menu {
+    background-color: rgba(42, 45, 66, 0.98);
+    border: 1px solid #3e4157;
+}
+
+body.darkmode .dropdown-item {
+    color: #f0f0f0;
+}
+
+body.darkmode .dropdown-item:hover,
+body.darkmode .dropdown-item:focus {
+    background-color: #2d3048;
+    color: #f0f0f0;
+}
+
+body.darkmode .dropdown-divider {
+    border-color: #3e4157;
+}
+
+/* ===== BADGES ===== */
+body.darkmode .badge {
+    color: #f0f0f0;
+}
+
+body.darkmode .badge.bg-light {
+    background-color: #2d3048 !important;
+    color: #c0c0c8 !important;
+    border-color: #3e4157 !important;
+}
+
+/* ===== BORDERS ===== */
+body.darkmode .border,
+body.darkmode .border-top,
+body.darkmode .border-bottom,
+body.darkmode .border-start,
+body.darkmode .border-end {
+    border-color: #3e4157 !important;
+}
+
+body.darkmode hr {
+    border-color: #3e4157;
+    opacity: 1;
+}
+
+/* ===== ALERTS ===== */
+body.darkmode .alert-info {
+    background-color: rgba(14, 165, 233, 0.15);
+    border-color: rgba(14, 165, 233, 0.3);
+    color: #f0f0f0;
+}
+
+/* ===== CODE & PRE ===== */
+body.darkmode pre,
+body.darkmode code {
+    background-color: #2d3048;
+    color: #f0f0f0;
+}
+
+/* ===== LINKS ===== */
+body.darkmode a {
+    color: #6b9aff;
+}
+
+body.darkmode a:hover {
+    color: #8ab0ff;
+}
+
+/* ===== THEME TOGGLE BUTTON ===== */
+body.darkmode .theme-toggle-btn {
+    background-color: #2d3048;
+    box-shadow: inset 0 4px 30px rgba(0, 0, 0, 0.3),
+        inset 4px 0 4px rgba(0, 0, 0, 0.3),
+        inset 0 -2px 2px rgba(0, 0, 0, 0.3);
+}
+
+body.darkmode .theme-toggle-btn__indicator {
+    transform: translateX(28px);
+    background-color: #2d3048;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+body.darkmode .theme-toggle-btn__icon {
+    color: #ffffff;
+}
+
+/* ===== FLOATING LOGO ===== */
+body.darkmode .fixed-bottom-logo {
+    background: rgba(42, 45, 66, 0.95);
+    border: 1px solid #3e4157;
+}
+
+/* ===== SCROLLBAR ===== */
+body.darkmode ::-webkit-scrollbar-track {
+    background: #2d3048;
+}
+
+body.darkmode ::-webkit-scrollbar-thumb {
+    background: #4a4a5e;
+}
+
+body.darkmode ::-webkit-scrollbar-thumb:hover {
+    background: #5a5a6e;
+}
+
+/* ===== SPECIFIC COMPONENTS ===== */
+/* Summary Section */
+body.darkmode #summarySubtotal,
+body.darkmode #summaryDiscount,
+body.darkmode #summaryCGST,
+body.darkmode #summarySGST,
+body.darkmode #summaryIGST,
+body.darkmode #summaryTotal,
+body.darkmode #summaryAmountInWords {
+    color: #f0f0f0 !important;
+}
+
+body.darkmode #discountRow {
+    color: #10b981 !important;
+}
+
+body.darkmode #discountRow span {
+    color: #10b981 !important;
+}
+
+/* Empty States */
+body.darkmode #emptyState,
+body.darkmode #profileEmptyState,
+body.darkmode #itemEmptyState,
+body.darkmode #historyEmptyState {
+    color: #b8b8c0;
+}
+
+/* Italic Text */
+body.darkmode .fst-italic {
+    color: #b8b8c0 !important;
+}
+
+/* ===== RESPONSIVE MOBILE STYLES ===== */
+@media (max-width: 768px) {
+
+    body.darkmode .modal-body .form-control,
+    body.darkmode .modal-body .form-select {
+        background-color: #2d3048;
+        border: 1px solid #3e4157;
+        color: #f0f0f0;
+    }
+
+    /* Mobile Items Table Fixes */
+    body.darkmode #itemsTable tbody tr {
+        background: rgba(42, 45, 66, 0.95);
+        border: 1px solid #3e4157;
+    }
+
+    body.darkmode #itemsTable td {
+        color: #f0f0f0 !important;
+        border-bottom: 1px solid #3e4157;
+    }
+
+    body.darkmode #itemsTable td::before {
+        color: #c0c0c8 !important;
+    }
+
+    body.darkmode #itemsTable .form-control,
+    body.darkmode #itemsTable .form-select {
+        background-color: #2d3048 !important;
+        border: 1px solid #3e4157 !important;
+        color: #f0f0f0 !important;
+    }
+}
+
+/* ===== ADDITIONAL ITEMS TABLE FIXES ===== */
+/* Desktop Items Table */
+body.darkmode #itemsTable tbody tr {
+    background-color: transparent;
+}
+
+body.darkmode #itemsTable tbody tr:hover {
+    background-color: rgba(50, 53, 75, 0.4);
+}
+
+/* Items Table Data Labels (Mobile) */
+body.darkmode #itemsTable td[data-label]::before {
+    color: #c0c0c8 !important;
+}
+
+/* Items Table Amount Column */
+body.darkmode #itemsTable td:last-child {
+    color: #f0f0f0 !important;
+}
+
+/* Empty State */
+body.darkmode #emptyState {
+    color: #b8b8c0 !important;
+}
+
+body.darkmode #emptyState i {
+    color: #808090 !important;
+}
+
+/* Items Table Footer */
+body.darkmode #itemsTable+div,
+body.darkmode .p-4.border-top.bg-light {
+    background-color: #2d3048 !important;
+    border-color: #3e4157 !important;
+}
+
+
+/* ===== UTILITY OVERRIDES ===== */
+/* Ensure all text classes are properly overridden */
+body.darkmode [class*="text-"] {
+    color: inherit;
+}
+
+/* Force visibility on all interactive elements */
+body.darkmode button,
+body.darkmode input,
+body.darkmode select,
+body.darkmode textarea,
+body.darkmode label {
+    color: #f0f0f0;
+}
+
+
+
+/* Ensure proper contrast on all elements */
+body.darkmode * {
+    border-color: #3e4157;
 }

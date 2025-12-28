@@ -57,8 +57,8 @@
         <div class="container-fluid">
             <a class="navbar-brand d-flex align-items-center" href="#">
                 <img src="img/512x512.png" alt="Invoice Generator Logo" class="me-2"
-                    style="height: 32px; width: 32px; object-fit: contain;">
-                <span class="fw-bold tracking-tight text-dark h4 mb-0">Invoice<span
+                    style="height: 40px; width: 40px; object-fit: contain;">
+                <span class="fw-bold tracking-tight text-dark h5 mb-0">Invoice<span
                         class="text-primary">Generator</span></span>
             </a>
 
@@ -90,11 +90,107 @@
 
                 <!-- Database Management Dropdown -->
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dbMenuBtn"
-                        data-bs-toggle="dropdown" aria-expanded="false" title="Database Management"
-                        aria-label="Open database management menu">
-                        <i class="fas fa-database me-1"></i>Data
-                    </button>
+                    <div class="container_SevMini" id="dbMenuBtn" data-bs-toggle="dropdown" aria-expanded="false"
+                        title="Database Management" role="button" tabindex="0">
+                        <div class="SevMini">
+                            <svg width="48" height="58" viewBox="0 0 74 90" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path d="M40 76.5L72 57V69.8615C72 70.5673 71.628 71.2209 71.0211 71.5812L40 90V76.5Z"
+                                    fill="#396CAA"></path>
+                                <path
+                                    d="M34 75.7077L2 57V69.8615C2 70.5673 2.37203 71.2209 2.97892 71.5812L34 90V75.7077Z"
+                                    fill="#396DAC"></path>
+                                <path d="M34 76.5H40V90H34V76.5Z" fill="#396CAA"></path>
+                                <path
+                                    d="M3.27905 55.593L35.2806 37.5438C36.3478 36.9419 37.6522 36.9419 38.7194 37.5438L70.721 55.593C71.7294 56.1618 71.7406 57.6102 70.7411 58.1945L39.2712 76.593C37.8682 77.4133 36.1318 77.4133 34.7288 76.593L3.25887 58.1945C2.25937 57.6102 2.27061 56.1618 3.27905 55.593Z"
+                                    fill="#163C79" stroke="#396CAA"></path>
+                                <path d="M40 79L72 60V70.4001C72 71.1151 71.6183 71.7758 70.9987 72.1329L40 90V79Z"
+                                    fill="#173D7A"></path>
+                                <path d="M34 79L3 61V71.5751L34 90V79Z" fill="#0665B2"></path>
+                                <path id="strobe_color1" d="M58 72.5L60.5 71V74L58 75.5V72.5Z" fill="#FF715E"></path>
+                                <path id="strobe_color2" d="M63 69.5L65.5 68V71L63 72.5V69.5Z" fill="#17e300b4"></path>
+                                <path d="M68 66.5L70.5 65V68L68 69.5V66.5Z" fill="#FF715E"></path>
+                                <path d="M40 58.5L72 39V51.8615C72 52.5673 71.628 53.2209 71.0211 53.5812L40 72V58.5Z"
+                                    fill="#396CAA"></path>
+                                <path
+                                    d="M34 57.7077L2 39V51.8615C2 52.5673 2.37203 53.2209 2.97892 53.5812L34 72V57.7077Z"
+                                    fill="#396DAC"></path>
+                                <path d="M34 58.5H40V72H34V58.5Z" fill="#396CAA"></path>
+                                <path
+                                    d="M3.27905 37.593L35.2806 19.5438C36.3478 18.9419 37.6522 18.9419 38.7194 19.5438L70.721 37.593C71.7294 38.1618 71.7406 39.6102 70.7411 40.1945L39.2712 58.593C37.8682 59.4133 36.1318 59.4133 34.7288 58.593L3.25887 40.1945C2.25937 39.6102 2.27061 38.1618 3.27905 37.593Z"
+                                    fill="#163C79" stroke="#396CAA"></path>
+                                <path d="M40 61L72 42V52.4001C72 53.1151 71.6183 53.7758 70.9987 54.1329L40 72V61Z"
+                                    fill="#173D7A"></path>
+                                <path d="M34 61L3 43V53.5751L34 72V61Z" fill="#0665B2"></path>
+                                <path d="M58 54.5L60.5 53V56L58 57.5V54.5Z" fill="#FF715E"></path>
+                                <path d="M63 51.5L65.5 50V53L63 54.5V51.5Z" fill="black"></path>
+                                <path id="strobe_color1" d="M63 51.5L65.5 50V53L63 54.5V51.5Z" fill="#FF715E"></path>
+                                <path d="M68 48.5L70.5 47V50L68 51.5V48.5Z" fill="#FF715E"></path>
+                                <path d="M40 40.5L72 21V33.8615C72 34.5673 71.628 35.2209 71.0211 35.5812L40 54V40.5Z"
+                                    fill="#396CAA"></path>
+                                <path
+                                    d="M34 39.7077L2 21V33.8615C2 34.5673 2.37203 35.2209 2.97892 35.5812L34 54V39.7077Z"
+                                    fill="#396DAC"></path>
+                                <path d="M34 40.5H40V54H34V40.5Z" fill="#396CAA"></path>
+                                <path
+                                    d="M3.27905 19.593L35.2806 1.54381C36.3478 0.941872 37.6522 0.941872 38.7194 1.54381L70.721 19.593C71.7294 20.1618 71.7406 21.6102 70.7411 22.1945L39.2712 40.593C37.8682 41.4133 36.1318 41.4133 34.7288 40.593L3.25887 22.1945C2.25937 21.6102 2.27061 20.1618 3.27905 19.593Z"
+                                    fill="#124E89" stroke="#396CAA"></path>
+                                <path d="M40 43L72 24V34.4001C72 35.1151 71.6183 35.7758 70.9987 36.1329L40 54V43Z"
+                                    fill="#173D7A"></path>
+                                <path d="M34 43L3 25V35.5751L34 54V43Z" fill="#0665B2"></path>
+                                <path d="M68 30.5L70.5 29V32L68 33.5V30.5Z" fill="#FF715E"></path>
+                                <path id="strobe_color3" d="M58 36.5L60.5 35V38L58 39.5V36.5Z" fill="#FF715E"></path>
+                                <path d="M63 33.5L65.5 32V35L63 36.5V33.5Z" fill="#FF715E"></path>
+                                <path
+                                    d="M20.1902 22.0719C18.8101 21.3026 18.8252 19.3119 20.2168 18.5636L36.1054 10.0189C37.2884 9.3827 38.7116 9.3827 39.8946 10.0189L55.7832 18.5636C57.1748 19.3119 57.1899 21.3026 55.8098 22.0719L40.4345 30.6429C38.9211 31.4865 37.0789 31.4865 35.5655 30.6429L20.1902 22.0719Z"
+                                    fill="#396CAA"></path>
+                                <path
+                                    d="M11 52.755C11 51.9801 11.8432 51.4997 12.5098 51.8947L23.5196 58.419C24.1273 58.7792 24.5 59.4332 24.5 60.1396V60.245C24.5 61.0199 23.6568 61.5003 22.9902 61.1053L11.9804 54.581C11.3727 54.2208 11 53.5668 11 52.8604V52.755Z"
+                                    fill="#396CAA"></path>
+                                <mask id="mask0_2_176" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="11" y="51"
+                                    width="14" height="11">
+                                    <path
+                                        d="M11 52.755C11 51.9801 11.8432 51.4997 12.5098 51.8947L23.5196 58.419C24.1273 58.7792 24.5 59.4332 24.5 60.1396V60.245C24.5 61.0199 23.6568 61.5003 22.9902 61.1053L11.9804 54.581C11.3727 54.2208 11 53.5668 11 52.8604V52.755Z"
+                                        fill="#396CAA"></path>
+                                </mask>
+                                <g mask="url(#mask0_2_176)">
+                                    <path
+                                        d="M11.5 52.7417C11.5 51.9803 12.3349 51.5138 12.9833 51.9128L23.5482 58.4143C24.1397 58.7783 24.5 59.4231 24.5 60.1176V61.5L12.4598 54.4195C11.8651 54.0698 11.5 53.4315 11.5 52.7417V52.7417Z"
+                                        fill="#163874"></path>
+                                </g>
+                                <mask id="mask1_2_176" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="19" y="9"
+                                    width="38" height="23">
+                                    <path
+                                        d="M20.1902 22.0719C18.8101 21.3026 18.8252 19.3119 20.2168 18.5636L36.1054 10.0189C37.2884 9.3827 38.7116 9.3827 39.8946 10.0189L55.7832 18.5636C57.1748 19.3119 57.1899 21.3026 55.8098 22.0719L40.4345 30.6429C38.9211 31.4865 37.0789 31.4865 35.5655 30.6429L20.1902 22.0719Z"
+                                        fill="#396CAA"></path>
+                                </mask>
+                                <g mask="url(#mask1_2_176)">
+                                    <path
+                                        d="M18 21.3115L36.167 11.9451C37.3171 11.3521 38.6829 11.3521 39.833 11.9451L58 21.3115L40.3567 30.7405C38.8841 31.5275 37.1159 31.5275 35.6433 30.7405L18 21.3115Z"
+                                        fill="#173D7A"></path>
+                                </g>
+                                <path d="M37.447 21.565L35 19.9799L37.6941 18.66L40.141 20.245L37.447 21.565Z"
+                                    fill="#FF715E"></path>
+                                <path
+                                    d="M48.9738 30.8646L47.0741 29.7745L49.1792 28.684L51.0789 29.7741L48.9738 30.8646Z"
+                                    fill="#173E7B"></path>
+                                <path
+                                    d="M52.0661 29.0093L50.1635 27.9242L52.2657 26.8282L54.1682 27.9133L52.0661 29.0093Z"
+                                    fill="#173E7B"></path>
+                                <path id="strobe_led1"
+                                    d="M55.1521 27.1464L53.2538 26.054L55.3602 24.9661L57.2585 26.0586L55.1521 27.1464Z"
+                                    fill="#3A6DAB"></path>
+                            </svg>
+                        </div>
+                        <div class="Ghost">
+                            <svg width="24" height="14" viewBox="0 0 60 36" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M1.96545 19.4296C0.643777 18.6484 0.658726 16.7309 1.99242 15.9705L28.0186 1.12982C29.2467 0.429534 30.7533 0.429533 31.9814 1.12982L58.0076 15.9704C59.3413 16.7309 59.3562 18.6484 58.0346 19.4296L32.5442 34.4962C30.9749 35.4238 29.0251 35.4238 27.4558 34.4962L1.96545 19.4296Z"
+                                    fill="#3C4F6D"></path>
+                            </svg>
+                        </div>
+                    </div>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dbMenuBtn">
                         <li><a class="dropdown-item" href="#" onclick="DataManager.viewDatabase(); return false;">
                                 <i class="fas fa-eye me-2"></i>View Local Database
@@ -192,6 +288,66 @@ create policy "Allow generic access" on user_data for all using (true) with chec
         </div>
     </div>
 
+    <!-- Reset Confirmation Modal -->
+    <div class="modal fade" id="resetConfirmationModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Confirm Reset</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">Are you sure you want to reset all values to default? This action cannot be undone.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmResetBtn">Yes, Reset All</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generic Alert Modal -->
+    <div class="modal fade" id="genericAlertModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white" id="genericAlertHeader">
+                    <h5 class="modal-title" id="genericAlertTitle"><i class="fas fa-info-circle me-2"></i>Notification
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0" id="genericAlertMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generic Confirm Modal -->
+    <div class="modal fade" id="genericConfirmModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white" id="genericConfirmHeader">
+                    <h5 class="modal-title" id="genericConfirmTitle"><i class="fas fa-question-circle me-2"></i>Confirm
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0" id="genericConfirmMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                        id="genericConfirmCancelBtn">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="genericConfirmYesBtn">Yes, Proceed</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="container py-4">
         <form id="invoiceForm">
             <div class="row g-4">
@@ -200,20 +356,50 @@ create policy "Allow generic access" on user_data for all using (true) with chec
                     <!-- Invoice Details Card -->
                     <div class="card shadow-sm border-0 mb-4">
                         <div
-                            class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                            class="card-header bg-white border-bottom py-3 d-flex flex-wrap justify-content-between align-items-center">
                             <h5 class="mb-0 text-primary"><i class="fas fa-info-circle me-2"></i>Invoice Details</h5>
-                            <div class="col-md-6 text-md-end no-print">
-                                <button type="button" class="btn btn-outline-success me-2"
+                            <div class="col-12 col-md-6 text-md-end no-print mt-2 mt-md-0">
+                                <button type="button" class="btn-save-animated me-2"
                                     onclick="InvoiceManager.saveCurrent()">
-                                    <i class="fas fa-save me-1"></i>Save
+                                    <div class="svg-wrapper-1">
+                                        <div class="svg-wrapper">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24"
+                                                height="24" class="icon">
+                                                <path
+                                                    d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <span>Save</span>
                                 </button>
-                                <button type="button" class="btn btn-outline-secondary me-2"
+                                <button type="button" class="btn-history-animated me-2"
                                     onclick="InvoiceManager.openHistory()">
-                                    <i class="fas fa-history me-1"></i>History
+                                    <div class="svg-wrapper-1">
+                                        <div class="svg-wrapper">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24"
+                                                height="24" class="icon">
+                                                <path
+                                                    d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <span>History</span>
                                 </button>
-                                <button type="button" class="btn btn-danger" id="resetBtn"
+                                <button type="button" class="btn-reset-animated" id="resetBtn"
                                     aria-label="Reset all fields">
-                                    <i class="fas fa-redo me-1"></i>Reset
+                                    <div class="svg-wrapper-1">
+                                        <div class="svg-wrapper">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24"
+                                                height="24" class="icon">
+                                                <path
+                                                    d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <span>Reset</span>
                                 </button>
                             </div>
                         </div>
@@ -280,6 +466,16 @@ create policy "Allow generic access" on user_data for all using (true) with chec
                                                 id="logoUrlOption" value="url" checked>
                                             <label class="form-check-label" for="logoUrlOption">Image URL</label>
                                         </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="logoOption"
+                                                id="logoCreateOption" value="create">
+                                            <label class="form-check-label" for="logoCreateOption">Create Logo</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="logoOption"
+                                                id="logoNoneOption" value="none">
+                                            <label class="form-check-label" for="logoNoneOption">No Logo</label>
+                                        </div>
                                     </div>
 
                                     <div id="logoUrlInput" class="">
@@ -293,6 +489,32 @@ create policy "Allow generic access" on user_data for all using (true) with chec
                                         </div>
                                         <button type="button" class="btn btn-sm btn-outline-primary mt-2"
                                             id="previewLogoUrlBtn">Load Image</button>
+                                    </div>
+
+                                    <div id="logoCreateInput" class="d-none">
+                                        <div class="row g-2 align-items-end">
+                                            <div class="col-6 col-md-3">
+                                                <label class="form-label small text-muted mb-1">Initials (Opt)</label>
+                                                <input type="text" class="form-control" id="logoInitials"
+                                                    placeholder="ABC" maxlength="3">
+                                            </div>
+                                            <div class="col-6 col-md-3">
+                                                <label class="form-label small text-muted mb-1">Bg Color</label>
+                                                <input type="color" class="form-control form-control-color w-100"
+                                                    id="logoBgColor" value="#2563eb" title="Choose background color">
+                                            </div>
+                                            <div class="col-6 col-md-3">
+                                                <label class="form-label small text-muted mb-1">Text Color</label>
+                                                <input type="color" class="form-control form-control-color w-100"
+                                                    id="logoTextColor" value="#ffffff" title="Choose text color">
+                                            </div>
+                                            <div class="col-6 col-md-3">
+                                                <button type="button" class="btn btn-primary w-100"
+                                                    id="generateLogoBtn">
+                                                    <i class="fas fa-magic me-1"></i>Generate
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div class="mt-3 text-center p-2 bg-light rounded border"
@@ -315,8 +537,53 @@ create policy "Allow generic access" on user_data for all using (true) with chec
                                         </div>
                                         <div class="form-check form-check-inline">
                                             <input class="form-check-input" type="radio" name="signatureOption"
+                                                id="sigCreateOption" value="create">
+                                            <label class="form-check-label" for="sigCreateOption">Create
+                                                Signature</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="signatureOption"
                                                 id="sigUrlOption" value="url" checked>
                                             <label class="form-check-label" for="sigUrlOption">Image URL</label>
+                                        </div>
+                                    </div>
+
+                                    <div id="sigCreateInput" class="d-none">
+                                        <div class="row g-2 align-items-end">
+                                            <div class="col-md-4">
+                                                <label class="form-label small text-muted mb-1">Name</label>
+                                                <input type="text" class="form-control" id="sigNameInput"
+                                                    placeholder="Enter Name">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label small text-muted mb-1">Font Style</label>
+                                                <select class="form-select" id="sigFontInput">
+                                                    <option value="WhisperingSignature">Style 1</option>
+                                                    <option value="BastligaOne">Style 2</option>
+                                                    <option value="AmsterdamHandwriting">Style 3</option>
+                                                    <option value="Palisade">Style 4</option>
+                                                    <option value="Priestacy">Style 5</option>
+                                                    <option value="Signatie">Style 6</option>
+                                                    <option value="Modernline">Style 7</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label small text-muted mb-1">Color</label>
+                                                <input type="color" class="form-control form-control-color w-100"
+                                                    id="sigColorInput" value="#000000">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <button type="button" class="btn btn-primary w-100" id="generateSigBtn">
+                                                    <i class="fas fa-signature me-1"></i>Generate
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 text-center p-2 bg-light rounded border"
+                                            style="min-height: 100px; display: flex; align-items: center; justify-content: center;">
+                                            <img id="sigCreatedPreview" src="" alt="Signature Preview"
+                                                style="max-width: 100%; max-height: 100px; display: none;">
+                                            <span class="text-muted small" id="sigCreatedPlaceholder">Click Generate to
+                                                preview</span>
                                         </div>
                                     </div>
 
@@ -580,19 +847,31 @@ create policy "Allow generic access" on user_data for all using (true) with chec
                                     Only</span>
                             </div>
 
-                            <div class="d-grid gap-2">
-                                <button type="button" class="btn btn-primary py-2" id="btnTaxInvoice">
-                                    <i class="fas fa-file-invoice me-2"></i>Download Tax Invoice
-                                </button>
-                                <button type="button" class="btn btn-success py-2" id="btnSimpleInvoice">
-                                    <i class="fas fa-file-alt me-2"></i>Simple Invoice (No Tax)
-                                </button>
-                                <button type="button" class="btn btn-info text-white py-2" id="btnQuote">
-                                    <i class="fas fa-file-invoice-dollar me-2"></i>Download Quote
-                                </button>
-                                <button type="button" class="btn btn-warning py-2" id="btnChallan">
-                                    <i class="fas fa-truck me-2"></i>Delivery Challan
-                                </button>
+                            <div class="d-flex flex-column align-items-center w-100">
+                                <a id="btnTaxInvoice" class="btn-slide primary" href="javascript:void(0)"
+                                    aria-label="Download Tax Invoice">
+                                    <span class="circle"><i class="fas fa-file-invoice"></i></span>
+                                    <span class="title">Tax Invoice</span>
+                                    <span class="title-hover">Download PDF</span>
+                                </a>
+                                <a id="btnSimpleInvoice" class="btn-slide success" href="javascript:void(0)"
+                                    aria-label="Download Simple Invoice">
+                                    <span class="circle"><i class="fas fa-file-alt"></i></span>
+                                    <span class="title">Simple Invoice</span>
+                                    <span class="title-hover">Download PDF</span>
+                                </a>
+                                <a id="btnQuote" class="btn-slide info" href="javascript:void(0)"
+                                    aria-label="Download Quotation">
+                                    <span class="circle"><i class="fas fa-file-invoice-dollar"></i></span>
+                                    <span class="title">Quotation</span>
+                                    <span class="title-hover">Download PDF</span>
+                                </a>
+                                <a id="btnChallan" class="btn-slide warning" href="javascript:void(0)"
+                                    aria-label="Download Delivery Challan">
+                                    <span class="circle"><i class="fas fa-truck"></i></span>
+                                    <span class="title">Delivery Challan</span>
+                                    <span class="title-hover">Download PDF</span>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -791,6 +1070,32 @@ create policy "Allow generic access" on user_data for all using (true) with chec
             console.log('SW Registration skipped: Not on a secure origin or running locally via file://');
         }
     </script>
+    <!-- Draw Signature Modal -->
+    <div class="modal fade" id="drawModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Draw Signature</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="border rounded bg-white d-inline-block">
+                        <canvas id="profileSigCanvas" width="400" height="200"
+                            style="cursor: crosshair; touch-action: none;"></canvas>
+                    </div>
+                    <div class="mt-2 text-muted small">Sign above</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" onclick="ProfileManager.clearDrawCanvas()">
+                        <i class="fas fa-eraser me-1"></i> Clear
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="ProfileManager.saveDrawing()">
+                        <i class="fas fa-save me-1"></i> Save Signature
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

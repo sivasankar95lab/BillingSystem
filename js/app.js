@@ -21,22 +21,144 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoPlaceholder = document.getElementById('logoPlaceholder');
     const signatureCanvas = document.getElementById('signatureCanvas');
     const clearSignatureBtn = document.getElementById('clearSignatureBtn');
-    const signaturePreview = document.getElementById('signaturePreview');
-    const signaturePlaceholder = document.getElementById('signaturePlaceholder');
+    const signaturePreview = document.getElementById('sigCreatedPreview');
+    const signaturePlaceholder = document.getElementById('sigCreatedPlaceholder');
 
-    // Toggle Inputs
-    // Logo Option - Only URL exists effectively, masking this
-    // If you want to keep the listener in case of future expansion, ensure elements exist.
-    // For now, simpler to remove the toggle logic if only 1 option or just remove reference to missing ID.
+    // Logo Option Toggle
+    document.querySelectorAll('input[name="logoOption"]').forEach(el => {
+        el.addEventListener('change', (e) => {
+            const val = e.target.value;
+            document.getElementById('logoUrlInput').classList.toggle('d-none', val !== 'url');
+            document.getElementById('logoCreateInput').classList.toggle('d-none', val !== 'create');
+
+            if (val === 'none') {
+                state.logoImage = null;
+                logoPreview.style.display = 'none';
+                logoPlaceholder.style.display = 'block';
+                logoUrl.value = '';
+            } else if (val === 'url' && logoUrl.value) {
+                // Restore URL preview if available
+                previewLogoUrlBtn.click();
+            }
+        });
+    });
+
+
+    // Generate Logo from Name
+    document.getElementById('generateLogoBtn').addEventListener('click', () => {
+        const companyName = document.getElementById('companyName').value || 'Company';
+        const customInitials = document.getElementById('logoInitials').value;
+        const bgColor = document.getElementById('logoBgColor').value;
+        const textColor = document.getElementById('logoTextColor').value;
+
+        // Create canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = 500;
+        canvas.height = 500;
+        const ctx = canvas.getContext('2d');
+
+        // Draw Background (Rounded Rect not easy in raw canvas without path, let's do Circle or Rect)
+        // Let's do a filled square with rounded corners style or just a circle
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, 500, 500);
+
+        // Draw Text
+        ctx.fillStyle = textColor;
+        ctx.font = 'bold 80px sans-serif'; // Default size
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        let textToDraw = "";
+
+        if (customInitials && customInitials.trim() !== "") {
+            textToDraw = customInitials.trim().toUpperCase().substring(0, 3);
+        } else {
+            // Auto-scale text
+            const words = companyName.split(' ');
+
+            // Strategy: If name is long, take initials. If short (<= 2 words or < 15 chars), try to show full.
+            // Actually, for a simple logo, Initials are often best.
+            // Let's try to get up to 2 initials.
+            if (words.length > 0) {
+                textToDraw += words[0].charAt(0).toUpperCase();
+                if (words.length > 1) {
+                    textToDraw += words[1].charAt(0).toUpperCase();
+                } else if (companyName.length > 1) {
+                    textToDraw += companyName.charAt(1).toUpperCase();
+                }
+            }
+        }
+
+        // Override: if user wants full name, they might type it. 
+        // But let's stick to initials for a "Logo" look. 
+        // Or lets draw the Name if it fits? 
+        // Let's do Initials - it's safer for a logo box.
+        ctx.font = 'bold 250px Outfit, sans-serif';
+        ctx.fillText(textToDraw, 250, 250);
+
+        const dataUrl = canvas.toDataURL('image/png');
+        state.logoImage = dataUrl;
+        logoPreview.src = dataUrl;
+        logoPreview.style.display = 'block';
+        logoPlaceholder.style.display = 'none';
+    });
 
     document.querySelectorAll('input[name="signatureOption"]').forEach(el => {
         el.addEventListener('change', (e) => {
             const val = e.target.value;
             document.getElementById('sigDrawInput').classList.toggle('d-none', val !== 'draw');
             document.getElementById('sigUrlInput').classList.toggle('d-none', val !== 'url');
+            document.getElementById('sigCreateInput').classList.toggle('d-none', val !== 'create');
+
             if (val === 'draw') {
                 setTimeout(resizeCanvas, 0); // Trigger resize once visible
+            } else if (val === 'url' && signatureUrl.value) {
+                // Restore URL preview if available
+                signatureUrl.dispatchEvent(new Event('input'));
+            } else if (val === 'create') {
+                // Maybe auto-generate if name is already filled? 
+                // For now, let user click generate.
             }
+        });
+    });
+
+    // Generate Signature from Name
+    document.getElementById('generateSigBtn').addEventListener('click', () => {
+        const name = document.getElementById('sigNameInput').value;
+        const color = document.getElementById('sigColorInput').value;
+        const font = document.getElementById('sigFontInput').value;
+
+        if (!name) {
+            NotificationManager.alert("Please enter a name for the signature.");
+            return;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 600; // Wider for signature
+        canvas.height = 200;
+        const ctx = canvas.getContext('2d');
+
+        // Transparent Background
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Text
+        ctx.fillStyle = color;
+        // Use the custom font
+        ctx.font = `100px ${font}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // Wait for font to load? It's likely loaded by CSS, but valid check:
+        document.fonts.load(`100px ${font}`).then(function () {
+            ctx.fillText(name, canvas.width / 2, canvas.height / 2);
+
+            const dataUrl = canvas.toDataURL('image/png');
+            state.signatureImage = dataUrl;
+
+            const preview = document.getElementById('sigCreatedPreview');
+            preview.src = dataUrl;
+            preview.style.display = 'block';
+            document.getElementById('sigCreatedPlaceholder').style.display = 'none';
         });
     });
 
@@ -202,7 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
             callback(canvas.toDataURL('image/png'));
         };
         img.onerror = function () {
-            alert('Could not load image. Likely CORS restriction. Try uploading the file instead.');
+            NotificationManager.alert('Could not load image. Likely CORS restriction. Try uploading the file instead.');
         };
         img.src = url;
     }
@@ -418,9 +540,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Exports
     // Reset Button
-    document.getElementById('resetBtn').addEventListener('click', () => {
-        if (!confirm('Are you sure you want to reset all values to default?')) return;
+    // Reset Button - Custom Modal Logic
+    const resetModalEl = document.getElementById('resetConfirmationModal');
+    let resetModal = null;
+    if (resetModalEl) {
+        resetModal = new bootstrap.Modal(resetModalEl);
+    }
 
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        if (resetModal) {
+            resetModal.show();
+        } else if (confirm('Are you sure you want to reset all values to default?')) {
+            // Fallback if modal fails
+            executeReset();
+        }
+    });
+
+    document.getElementById('confirmResetBtn').addEventListener('click', () => {
+        executeReset();
+        if (resetModal) resetModal.hide();
+    });
+
+    function executeReset() {
         // Reset Form
         document.getElementById('invoiceForm').reset();
         invoiceDate.valueAsDate = new Date(); // Reset date to today
@@ -442,29 +583,17 @@ document.addEventListener('DOMContentLoaded', () => {
         signaturePlaceholder.style.display = 'block';
         document.getElementById('signatureUrlPreview').style.display = 'none';
         document.getElementById('signatureUrlPlaceholder').style.display = 'block';
-        document.getElementById('signatureUrlPlaceholder').style.display = 'block';
         ctx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
         document.getElementById('invoiceNote').value = '';
 
-        // Retrigger Toggles checks (to ensure correct inputs are shown)
+        // Retrigger Toggles checks
         const logoOpt = document.querySelector('input[name="logoOption"]:checked');
         if (logoOpt) logoOpt.dispatchEvent(new Event('change'));
         const sigOpt = document.querySelector('input[name="signatureOption"]:checked');
         if (sigOpt) sigOpt.dispatchEvent(new Event('change'));
 
-        // Retrigger Auto-load if URLs are present (Defaults)
-        setTimeout(() => {
-            if (logoUrl.value && !document.getElementById('logoUrlInput').classList.contains('d-none')) {
-                previewLogoUrlBtn.click();
-            }
-            if (signatureUrl.value && !document.getElementById('sigUrlInput').classList.contains('d-none')) {
-                // Manually trigger input to load sig
-                signatureUrl.dispatchEvent(new Event('input'));
-            }
-        }, 100);
-
         calculateTotals();
-    });
+    }
 
     document.getElementById('btnTaxInvoice').addEventListener('click', () => {
         generateTaxInvoice(gatherData());
@@ -548,10 +677,113 @@ document.addEventListener('DOMContentLoaded', () => {
     const ProfileManager = {
         currentType: 'company',
         profiles: [],
+        drawCanvas: null,
+        drawCtx: null,
+        isDrawing: false,
+        lastX: 0,
+        lastY: 0,
+        targetProfileIndex: -1,
+        modal: null,
+        drawModal: null,
 
         init() {
-            this.modal = new bootstrap.Modal(document.getElementById('profileModal'));
-            document.getElementById('addProfileRowBtn').addEventListener('click', () => this.addRow());
+            // Main Profile Modal
+            const elProfileModal = document.getElementById('profileModal');
+            if (elProfileModal) {
+                this.modal = new bootstrap.Modal(elProfileModal);
+            }
+
+            const btnAddRow = document.getElementById('addProfileRowBtn');
+            if (btnAddRow) {
+                btnAddRow.addEventListener('click', () => this.addRow());
+            }
+
+            // Draw Signature Modal - Init Once
+            const elDrawModal = document.getElementById('drawModal');
+            if (elDrawModal) {
+                this.drawModal = new bootstrap.Modal(elDrawModal);
+            }
+
+            // Draw Canvas Init
+            const canvas = document.getElementById('profileSigCanvas');
+            if (canvas) {
+                this.drawCanvas = canvas;
+                this.drawCtx = canvas.getContext('2d');
+
+                // Mouse Events
+                canvas.addEventListener('mousedown', (e) => this.startDrawing(e));
+                canvas.addEventListener('mousemove', (e) => this.draw(e));
+                canvas.addEventListener('mouseup', () => this.stopDrawing());
+                canvas.addEventListener('mouseout', () => this.stopDrawing());
+
+                // Touch Events
+                canvas.addEventListener('touchstart', (e) => {
+                    const touch = e.touches[0];
+                    const mouseEvent = new MouseEvent('mousedown', {
+                        clientX: touch.clientX,
+                        clientY: touch.clientY
+                    });
+                    canvas.dispatchEvent(mouseEvent);
+                    e.preventDefault();
+                }, { passive: false }); // passive: false to allow preventDefault
+
+                canvas.addEventListener('touchmove', (e) => {
+                    const touch = e.touches[0];
+                    const mouseEvent = new MouseEvent('mousemove', {
+                        clientX: touch.clientX,
+                        clientY: touch.clientY
+                    });
+                    canvas.dispatchEvent(mouseEvent);
+                    e.preventDefault();
+                }, { passive: false });
+
+                canvas.addEventListener('touchend', () => {
+                    const mouseEvent = new MouseEvent('mouseup', {});
+                    canvas.dispatchEvent(mouseEvent);
+                });
+            }
+        },
+
+        startDrawing(e) {
+            this.isDrawing = true;
+            [this.lastX, this.lastY] = [e.offsetX, e.offsetY];
+        },
+        draw(e) {
+            if (!this.isDrawing) return;
+            this.drawCtx.beginPath();
+            this.drawCtx.moveTo(this.lastX, this.lastY);
+            this.drawCtx.lineTo(e.offsetX, e.offsetY);
+            this.drawCtx.stroke();
+            [this.lastX, this.lastY] = [e.offsetX, e.offsetY];
+        },
+        stopDrawing() {
+            this.isDrawing = false;
+        },
+        clearDrawCanvas() {
+            if (this.drawCtx && this.drawCanvas) {
+                this.drawCtx.clearRect(0, 0, this.drawCanvas.width, this.drawCanvas.height);
+            }
+        },
+        openDrawModal(index) {
+            this.targetProfileIndex = index;
+            this.clearDrawCanvas();
+            // Use stored instance
+            if (this.drawModal) {
+                this.drawModal.show();
+            } else {
+                console.error("Draw Modal not initialized");
+            }
+        },
+        saveDrawing() {
+            if (this.targetProfileIndex > -1 && this.drawCanvas) {
+                const dataUrl = this.drawCanvas.toDataURL();
+                this.updateField(this.targetProfileIndex, 'signatureUrl', dataUrl);
+                this.renderTable();
+
+                if (this.drawModal) {
+                    this.drawModal.hide();
+                }
+            }
         },
 
         open(type) {
@@ -561,10 +793,12 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (type === 'client') title = 'Manage Client Profiles';
             else if (type === 'payment') title = 'Manage Payment Details';
 
-            document.getElementById('profileModalTitle').textContent = title;
+            const titleEl = document.getElementById('profileModalTitle');
+            if (titleEl) titleEl.textContent = title;
+
             this.loadProfiles();
             this.renderTable();
-            this.modal.show();
+            if (this.modal) this.modal.show();
         },
 
         loadProfiles() {
@@ -577,39 +811,28 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         loadDefaults() {
-            // Load Company Default
-            const companyData = localStorage.getItem('invoice_profiles_company');
-            if (companyData) {
-                const profiles = JSON.parse(companyData);
-                if (profiles.length > 0) {
-                    this.currentType = 'company';
-                    this.profiles = profiles;
-                    this.useProfile(0);
+            const types = ['company', 'client', 'payment'];
+            types.forEach(type => {
+                const key = `invoice_profiles_${type}`;
+                const data = localStorage.getItem(key);
+                if (data) {
+                    const profiles = JSON.parse(data);
+                    // Only load default if we are currently not editing anything? 
+                    // Actually usually we just want to load the *values* into the invoices
+                    // But here we are just ensuring data is ready? 
+                    // UseProfile logic is separate. 
+                    // Let's stick to the previous logic: auto-use index 0.
+                    if (profiles.length > 0) {
+                        // Temporarily switch type to load
+                        const prevType = this.currentType;
+                        this.currentType = type;
+                        this.profiles = profiles;
+                        this.useProfile(0); // This applies it to the main form
+                        this.currentType = prevType; // Restore
+                        this.profiles = []; // Clear for safety, will reload on open()
+                    }
                 }
-            }
-            // Load Client Default (optional, maybe user doesn't want client pre-filled?)
-            // User said "use top profile values", implies generic preferences. 
-            // Usually Company is static, Client varies. But let's follow instruction "top profile values".
-            const clientData = localStorage.getItem('invoice_profiles_client');
-            if (clientData) {
-                const profiles = JSON.parse(clientData);
-                if (profiles.length > 0) {
-                    this.currentType = 'client';
-                    this.profiles = profiles;
-                    this.useProfile(0);
-                }
-            }
-
-            // Load Payment Default
-            const paymentData = localStorage.getItem('invoice_profiles_payment');
-            if (paymentData) {
-                const profiles = JSON.parse(paymentData);
-                if (profiles.length > 0) {
-                    this.currentType = 'payment';
-                    this.profiles = profiles;
-                    this.useProfile(0);
-                }
-            }
+            });
         },
 
         saveProfiles() {
@@ -629,8 +852,30 @@ document.addEventListener('DOMContentLoaded', () => {
                         { key: 'companyGstin', label: 'GSTIN', id: 'companyGst' },
                         { key: 'companyPhone', label: 'Phone', id: 'companyPhone' },
                         { key: 'companyEmail', label: 'Email', id: 'companyEmail' },
+
+                        // Logo Fields
+                        {
+                            key: 'logoOption', label: 'Logo Type', id: 'logoOption', type: 'radio',
+                            options: [{ v: 'url', l: 'URL' }, { v: 'create', l: 'Create' }, { v: 'none', l: 'None' }]
+                        },
                         { key: 'logoUrl', label: 'Logo URL', id: 'logoUrl' },
-                        { key: 'signatureUrl', label: 'Signature URL', id: 'signatureUrl' }
+                        { key: 'logoInitials', label: 'Logo Initials', id: 'logoInitials' },
+                        { key: 'logoBgColor', label: 'Logo Bg', id: 'logoBgColor', type: 'color' },
+                        { key: 'logoTextColor', label: 'Logo Text', id: 'logoTextColor', type: 'color' },
+
+                        // Signature Fields
+                        {
+                            key: 'signatureOption', label: 'Sig Type', id: 'signatureOption', type: 'radio',
+                            options: [{ v: 'url', l: 'URL' }, { v: 'draw', l: 'Draw' }, { v: 'create', l: 'Create' }]
+                        },
+                        { key: 'signatureDraw', label: 'Draw Sig', id: 'sigDrawAction', type: 'draw_action' },
+                        { key: 'signatureUrl', label: 'Sig URL', id: 'signatureUrl' },
+                        { key: 'sigName', label: 'Sig Name', id: 'sigNameInput' },
+                        {
+                            key: 'sigFont', label: 'Sig Font', id: 'sigFontInput', type: 'select',
+                            options: ['WhisperingSignature', 'BastligaOne', 'AmsterdamHandwriting', 'Palisade', 'Priestacy', 'Signatie', 'Modernline']
+                        },
+                        { key: 'sigColor', label: 'Sig Color', id: 'sigColorInput', type: 'color' }
                     ];
                 case 'client':
                     return [
@@ -640,7 +885,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         { key: 'clientPhone', label: 'Phone', id: 'clientPhone' },
                         { key: 'clientEmail', label: 'Email', id: 'clientEmail' },
                         { key: 'clientNotes', label: 'Notes', id: 'clientNotes' },
-                        { key: 'state', label: 'State', id: 'clientState', options: ['Same State', 'Inter State'] }
+                        { key: 'state', label: 'State', id: 'clientState', type: 'select', options: ['Same State', 'Inter State'] }
                     ];
                 case 'payment':
                     return [
@@ -655,10 +900,10 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         autoSaveClient() {
+            // Logic handled by main app save flow usually, but we keep this for specific field blurs
             const clientName = document.getElementById('clientName').value;
-            if (!clientName) return; // Don't save empty names
+            if (!clientName) return;
 
-            // Retrieve current client profiles without changing global state excessively
             const key = 'invoice_profiles_client';
             const data = localStorage.getItem(key);
             let profiles = data ? JSON.parse(data) : [];
@@ -677,26 +922,11 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             if (existingIndex !== -1) {
-                // Update existing
                 profiles[existingIndex] = currentProfile;
             } else {
-                // Add new
                 profiles.push(currentProfile);
             }
-
             localStorage.setItem(key, JSON.stringify(profiles));
-            // If the modal is open and showing clients, refresh it? 
-            // Better not to disturb UI flux too much unless needed.
-        },
-
-        moveProfile(index, direction) {
-            const newIndex = index + direction;
-            if (newIndex < 0 || newIndex >= this.profiles.length) return;
-
-            // Swap
-            [this.profiles[index], this.profiles[newIndex]] = [this.profiles[newIndex], this.profiles[index]];
-            this.saveProfiles();
-            this.renderTable();
         },
 
         renderTable() {
@@ -710,6 +940,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fields.forEach(f => {
                 const th = document.createElement('th');
                 th.textContent = f.label;
+                th.style.whiteSpace = 'nowrap';
                 thead.appendChild(th);
             });
             thead.innerHTML += '<th style="width: 150px;">Actions</th>';
@@ -725,26 +956,85 @@ document.addEventListener('DOMContentLoaded', () => {
                     fields.forEach(f => {
                         const td = document.createElement('td');
                         td.setAttribute('data-label', f.label);
-                        if (f.key === 'state') {
-                            // Select for state
+
+                        const fieldId = `pfield-${index}-${f.key}`;
+
+                        if (f.options) {
+                            // Select (works for both 'select' and 'radio' type storage in table as dropdown)
                             const select = document.createElement('select');
+                            select.id = fieldId;
                             select.className = 'form-select form-select-sm border-0 bg-transparent';
+                            select.style.minWidth = '100px';
+
                             f.options.forEach(opt => {
                                 const option = document.createElement('option');
-                                option.value = opt;
-                                option.textContent = opt === 'Same State' ? 'Intra-State' : 'Inter-State';
-                                if (opt === profile[f.key]) option.selected = true;
+                                const val = typeof opt === 'object' ? opt.v : opt;
+                                const lbl = typeof opt === 'object' ? opt.l : (opt === 'Same State' ? 'Intra-State' : (opt === 'Inter State' ? 'Inter-State' : opt));
+
+                                option.value = val;
+                                option.textContent = lbl;
+                                if (val === profile[f.key]) option.selected = true;
                                 select.appendChild(option);
                             });
-                            select.addEventListener('change', (e) => this.updateField(index, f.key, e.target.value));
+                            select.addEventListener('change', (e) => {
+                                this.updateField(index, f.key, e.target.value);
+                                this.updateUIState(index);
+                                // Force re-render to toggle buttons if needed
+                                this.renderTable();
+                            });
                             td.appendChild(select);
+                        } else if (f.type === 'color') {
+                            const input = document.createElement('input');
+                            input.id = fieldId;
+                            input.type = 'color';
+                            input.className = 'form-control form-control-color border-0 bg-transparent';
+                            input.value = profile[f.key] || '#000000';
+                            input.title = profile[f.key];
+                            input.addEventListener('input', (e) => this.updateField(index, f.key, e.target.value));
+                            td.appendChild(input);
+                        } else if (f.type === 'draw_action') {
+                            // Custom Drawing Column
+                            if (profile.signatureOption === 'draw') {
+                                const container = document.createElement('div');
+                                container.className = 'd-flex align-items-center';
+
+                                const btn = document.createElement('button');
+                                btn.className = 'btn btn-sm btn-outline-primary me-2';
+                                btn.innerHTML = '<i class="fas fa-pen"></i>';
+                                btn.title = "Open Draw Canvas";
+                                btn.onclick = () => this.openDrawModal(index);
+                                container.appendChild(btn);
+
+                                if (profile.signatureUrl && profile.signatureUrl.startsWith('data:image')) {
+                                    const img = document.createElement('img');
+                                    img.src = profile.signatureUrl;
+                                    img.style.height = '30px';
+                                    img.className = 'border rounded';
+                                    container.appendChild(img);
+                                }
+                                td.appendChild(container);
+                            } else {
+                                td.textContent = '-';
+                                td.className = 'text-muted text-center';
+                            }
                         } else {
                             // Text Input
                             const input = document.createElement('input');
+                            input.id = fieldId;
                             input.type = 'text';
                             input.className = 'form-control form-control-sm border-0 bg-transparent';
                             input.value = profile[f.key] || '';
                             input.placeholder = f.label;
+                            input.style.minWidth = '120px';
+
+                            // Special logic for Signature URL when option is DRAW
+                            if (f.key === 'signatureUrl' && profile.signatureOption === 'draw') {
+                                input.readOnly = true;
+                                input.placeholder = "(Drawing Data)";
+                                input.className += ' text-muted fst-italic';
+                                if (input.value.length > 20) input.value = 'Captured Data...'; // Don't show massive base64
+                            }
+
                             input.addEventListener('input', (e) => this.updateField(index, f.key, e.target.value));
                             td.appendChild(input);
                         }
@@ -771,13 +1061,72 @@ document.addEventListener('DOMContentLoaded', () => {
                     `;
                     tr.appendChild(actionTd);
                     tbody.appendChild(tr);
+
+                    // Initialize UI State
+                    this.updateUIState(index);
+                });
+            }
+        },
+
+        updateUIState(index) {
+            const profile = this.profiles[index];
+            const getEl = (key) => document.getElementById(`pfield-${index}-${key}`);
+
+            // 1. Logo Logic
+            if (profile.logoOption) {
+                const isUrl = profile.logoOption === 'url';
+                const isCreate = profile.logoOption === 'create';
+
+                const urlEl = getEl('logoUrl');
+                if (urlEl) {
+                    urlEl.disabled = !isUrl;
+                    urlEl.style.opacity = isUrl ? '1' : '0.5';
+                }
+
+                ['logoInitials', 'logoBgColor', 'logoTextColor'].forEach(k => {
+                    const el = getEl(k);
+                    if (el) {
+                        el.disabled = !isCreate;
+                        el.style.opacity = isCreate ? '1' : '0.5';
+                    }
+                });
+            }
+
+            // 2. Signature Logic
+            if (profile.signatureOption) {
+                const isUrl = profile.signatureOption === 'url';
+                const isCreate = profile.signatureOption === 'create';
+
+                const urlEl = getEl('signatureUrl');
+                if (urlEl) {
+                    if (profile.signatureOption === 'draw') {
+                        // handled by Button replacement in renderTable
+                    } else {
+                        urlEl.disabled = !isUrl;
+                        urlEl.style.opacity = isUrl ? '1' : '0.5';
+                    }
+                }
+
+                ['sigName', 'sigFont', 'sigColor'].forEach(k => {
+                    const el = getEl(k);
+                    if (el) {
+                        el.disabled = !isCreate;
+                        el.style.opacity = isCreate ? '1' : '0.5';
+                    }
                 });
             }
         },
 
         addRow() {
             const newProfile = {};
-            this.fields().forEach(f => newProfile[f.key] = f.key === 'state' ? 'Same State' : '');
+            this.fields().forEach(f => {
+                if (f.key === 'logoOption') newProfile[f.key] = 'url';
+                else if (f.key === 'signatureOption') newProfile[f.key] = 'url';
+                else if (f.key === 'state') newProfile[f.key] = 'Same State';
+                else if (f.key === 'sigFont') newProfile[f.key] = 'WhisperingSignature';
+                else if (f.type === 'color') newProfile[f.key] = '#000000';
+                else newProfile[f.key] = '';
+            });
             this.profiles.push(newProfile);
             this.saveProfiles();
             this.renderTable();
@@ -796,20 +1145,75 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
+        moveProfile(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= this.profiles.length) return;
+
+            // Swap
+            [this.profiles[index], this.profiles[newIndex]] = [this.profiles[newIndex], this.profiles[index]];
+            this.saveProfiles();
+            this.renderTable();
+        },
+
         useProfile(index) {
             const profile = this.profiles[index];
             const fields = this.fields();
+
+            // First pass: Set values
             fields.forEach(f => {
-                const el = document.getElementById(f.id);
-                if (el) {
-                    el.value = profile[f.key];
-                    // Trigger change event for State select to update tax display
-                    if (f.key === 'state') el.dispatchEvent(new Event('change'));
-                    // Trigger input event for URLs to update previews
-                    if (f.key === 'logoUrl' || f.key === 'signatureUrl') el.dispatchEvent(new Event('input'));
+                if (f.type === 'radio') {
+                    // Check the specific radio button
+                    const radio = document.querySelector(`input[name="${f.id}"][value="${profile[f.key]}"]`);
+                    if (radio) {
+                        radio.checked = true;
+                        radio.dispatchEvent(new Event('change'));
+                    }
+                } else {
+                    const el = document.getElementById(f.id);
+                    if (el) {
+                        el.value = profile[f.key];
+                        // Trigger input event for colors and text to ensure UI updates
+                        el.dispatchEvent(new Event('input'));
+                        el.dispatchEvent(new Event('change'));
+                    }
                 }
             });
-            this.modal.hide();
+
+            // Second pass: Trigger Actions (Logo Gen, Sig Gen)
+            setTimeout(() => {
+                // If Logo Create
+                if (profile.logoOption === 'create') {
+                    const btn = document.getElementById('generateLogoBtn');
+                    if (btn) btn.click();
+                }
+
+                // If Signature Draw - AND we have data
+                if (profile.signatureOption === 'draw' && profile.signatureUrl) {
+                    const sigCanvas = document.getElementById('signatureCanvas');
+                    if (sigCanvas && sigCanvas.getContext) {
+                        const ctx = sigCanvas.getContext('2d');
+                        const img = new Image();
+                        img.onload = () => {
+                            ctx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+                            ctx.drawImage(img, 0, 0);
+
+                            // Update state manually as we bypassed usual input method
+                            state.signatureImage = profile.signatureUrl;
+
+
+                        };
+                        img.src = profile.signatureUrl;
+                    }
+                }
+
+                // If Signature Create
+                if (profile.signatureOption === 'create') {
+                    const btn = document.getElementById('generateSigBtn');
+                    if (btn) btn.click();
+                }
+            }, 100);
+
+            if (this.modal) this.modal.hide();
         }
     };
 
@@ -818,10 +1222,13 @@ document.addEventListener('DOMContentLoaded', () => {
     ProfileManager.loadDefaults();
 
     // Expose global functions for HTML onclick
+    window.ProfileManager = ProfileManager;
     window.openProfileModal = (type) => ProfileManager.open(type);
     window.deleteProfile = (index) => ProfileManager.deleteProfile(index);
     window.useProfile = (index) => ProfileManager.useProfile(index);
     window.moveProfile = (index, dir) => ProfileManager.moveProfile(index, dir);
+
+
 
     // Auto-Save Listeners for Client Fields
     ['clientName', 'clientAddress', 'clientGst', 'clientPhone', 'clientEmail', 'clientNotes', 'clientState'].forEach(id => {
@@ -1051,19 +1458,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const existingIndex = this.history.findIndex(inv => inv.details.invoiceNumber === data.details.invoiceNumber);
 
             if (existingIndex !== -1) {
-                if (confirm(`Invoice number "${data.details.invoiceNumber}" already exists in history. Do you want to overwrite it?`)) {
-                    // Update existing
-                    this.history[existingIndex] = snapshot;
-                    this.saveHistory();
-                    alert('Invoice updated successfully!');
-                }
-                // If they cancel, we do nothing (don't save)
+                NotificationManager.confirm(
+                    `Invoice number "${data.details.invoiceNumber}" already exists in history. Do you want to overwrite it?`,
+                    () => {
+                        // Update existing
+                        this.history[existingIndex] = snapshot;
+                        this.saveHistory();
+                        NotificationManager.alert('Invoice updated successfully!', 'Success', 'success');
+                    },
+                    'Overwrite Invoice',
+                    'warning'
+                );
             } else {
                 // New Invoice
                 this.history.unshift(snapshot);
                 if (this.history.length > 50) this.history.pop();
                 this.saveHistory();
-                alert('Invoice saved successfully!');
+                NotificationManager.alert('Invoice saved successfully!', 'Success', 'success');
             }
         },
 
@@ -1103,15 +1514,30 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         delete(index) {
-            if (confirm('Delete this saved invoice?')) {
-                this.history.splice(index, 1);
-                this.saveHistory();
-                this.renderTable();
-            }
+            NotificationManager.confirm(
+                'Delete this saved invoice?',
+                () => {
+                    this.history.splice(index, 1);
+                    this.saveHistory();
+                    this.renderTable();
+                },
+                'Delete Invoice',
+                'danger'
+            );
         },
 
         load(index) {
-            if (!confirm('Load this invoice? Unsaved changes will be lost.')) return;
+            NotificationManager.confirm(
+                'Load this invoice? Unsaved changes will be lost.',
+                () => {
+                    this._executeLoad(index);
+                },
+                'Load Invoice',
+                'warning'
+            );
+        },
+
+        _executeLoad(index) {
 
             const record = this.history[index];
             const s = record.settings;
@@ -1186,7 +1612,7 @@ document.addEventListener('DOMContentLoaded', () => {
         textContainer: document.getElementById('syncStatusText'),
         helpModal: null,
 
-        keysToSync: ['invoice_history', 'invoice_profiles_company', 'invoice_profiles_client', 'invoice_profiles_payment', 'invoice_items_catalogue', 'error_log'],
+        keysToSync: ['invoice_history', 'invoice_profiles_company', 'invoice_profiles_client', 'invoice_profiles_payment', 'invoice_items_catalogue', 'error_log', 'invoiceGeneratorDarkMode'],
         isOnline: true,
 
         init() {
@@ -1233,6 +1659,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         localStorage.setItem(row.key, JSON.stringify(row.value));
                         updates++;
                     }
+                    // Handle Dark Mode Sync specifically if needed immediately
+                    if (row.key === 'invoiceGeneratorDarkMode' && window.DarkModeManager) {
+                        window.DarkModeManager.load();
+                    }
                 });
 
                 if (updates > 0) {
@@ -1244,6 +1674,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     if (window.ProfileManager && window.ProfileManager.loadProfiles) window.ProfileManager.loadProfiles();
                     if (window.ItemManager && window.ItemManager.loadItems) window.ItemManager.loadItems();
+                    if (window.ErrorLogger && window.ErrorLogger.load) window.ErrorLogger.load();
                 }
 
                 this.setSuccessState();
@@ -1394,16 +1825,19 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
-            alert('Data exported successfully!');
+            NotificationManager.alert('Data exported successfully!');
         },
 
         importData() {
-            if (!confirm('Import data? This will OVERWRITE your current local data. Make sure you have a backup first!')) {
-                return;
-            }
-
-            // Trigger file input
-            document.getElementById('importFileInput').click();
+            NotificationManager.confirm(
+                'Import data? This will OVERWRITE your current local data. Make sure you have a backup first!',
+                () => {
+                    // Trigger file input
+                    document.getElementById('importFileInput').click();
+                },
+                'Warning',
+                'danger'
+            );
         },
 
         handleFileImport(event) {
@@ -1443,16 +1877,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.ItemManager.updateDatalist();
                     }
 
-                    alert(`Data imported successfully! ${importCount} categories restored.\n\nExported on: ${imported.exportDate || 'Unknown'}\n\nPlease refresh the page to see all changes.`);
+                    NotificationManager.alert(
+                        `Data imported successfully! ${importCount} categories restored.\n\nExported on: ${imported.exportDate || 'Unknown'}\n\nPlease refresh the page to see all changes.`,
+                        'Success'
+                    );
 
                     // Optionally refresh the page
-                    if (confirm('Refresh the page now to apply all changes?')) {
-                        location.reload();
-                    }
+                    // Chained confirmation after alert (in a simpler flow, we might just put this in the alert callback or simpler separate confirm)
+                    // Let's just ask directly
+                    setTimeout(() => {
+                        NotificationManager.confirm(
+                            'Refresh the page now to apply all changes?',
+                            () => location.reload(),
+                            'Refresh Required',
+                            'primary'
+                        );
+                    }, 1000);
 
                 } catch (err) {
                     console.error('Import failed:', err);
-                    alert('Failed to import data. Please make sure the file is a valid backup file exported from this application.');
+                    NotificationManager.alert('Failed to import data. Please make sure the file is a valid backup file exported from this application.', 'Error');
                 }
 
                 // Reset file input
@@ -1473,26 +1917,72 @@ document.addEventListener('DOMContentLoaded', () => {
             if (modalEl) this.modal = new bootstrap.Modal(modalEl);
             this.load();
             this.setupListeners();
+            this.captureConsoleErrors();
         },
 
         setupListeners() {
             window.onerror = (message, source, lineno, colno, error) => {
                 this.log({
-                    type: 'Error',
+                    type: 'Global Error',
                     message,
-                    source,
-                    line: lineno,
-                    col: colno,
-                    stack: error ? error.stack : null
+                    source: `${source}:${lineno}:${colno}`,
+                    stack: error ? error.stack : 'No stack trace'
                 });
             };
 
             window.onunhandledrejection = (event) => {
                 this.log({
                     type: 'Unhandled Rejection',
-                    message: event.reason ? (event.reason.message || event.reason) : 'Unknown reason',
-                    reason: event.reason
+                    message: event.reason ? (event.reason.message || String(event.reason)) : 'Unknown reason',
+                    stack: event.reason && event.reason.stack ? event.reason.stack : null
                 });
+            };
+        },
+
+        captureConsoleErrors() {
+            const originalConsoleError = console.error;
+            const originalConsoleLog = console.log;
+
+            console.error = (...args) => {
+                const message = args.map(arg => {
+                    if (arg instanceof Error) return arg.message;
+                    if (typeof arg === 'object') {
+                        try {
+                            return JSON.stringify(arg);
+                        } catch (e) {
+                            return String(arg);
+                        }
+                    }
+                    return String(arg);
+                }).join(' ');
+
+                this.log({
+                    type: 'Console Error',
+                    message: message,
+                    stack: new Error().stack
+                });
+
+                originalConsoleError.apply(console, args);
+            };
+
+            console.log = (...args) => {
+                const message = args.map(arg => {
+                    if (typeof arg === 'object') {
+                        try {
+                            return JSON.stringify(arg);
+                        } catch (e) {
+                            return String(arg);
+                        }
+                    }
+                    return String(arg);
+                }).join(' ');
+
+                this.log({
+                    type: 'Console Log',
+                    message: message
+                });
+
+                originalConsoleLog.apply(console, args);
             };
         },
 
@@ -1503,7 +1993,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             if (!Array.isArray(this.logs)) this.logs = [];
             this.logs.unshift(entry);
-            if (this.logs.length > 100) this.logs.pop();
+            if (this.logs.length > 200) this.logs.pop(); // Increased limit
             this.save();
         },
 
@@ -1546,7 +2036,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         download() {
             if (this.logs.length === 0) {
-                alert('No logs to download.');
+                NotificationManager.alert('No logs to download.');
                 return;
             }
             const text = this.logs.map(log => JSON.stringify(log, null, 2)).join('\n\n---\n\n');
@@ -1562,11 +2052,16 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         clear() {
-            if (confirm('Are you sure you want to clear all error logs?')) {
-                this.logs = [];
-                this.save();
-                this.open(); // Refresh view
-            }
+            NotificationManager.confirm(
+                'Are you sure you want to clear all error logs?',
+                () => {
+                    this.logs = [];
+                    this.save();
+                    this.open(); // Refresh view
+                },
+                'Clear Logs',
+                'danger'
+            );
         }
     };
 
@@ -1650,5 +2145,74 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Dark Mode Manager
     DarkModeManager.init();
     window.DarkModeManager = DarkModeManager;
+
+    // Notification Manager Implementation
+    const NotificationManager = {
+        alertModal: null,
+        confirmModal: null,
+        onConfirm: null,
+
+        init() {
+            const alertEl = document.getElementById('genericAlertModal');
+            if (alertEl) this.alertModal = new bootstrap.Modal(alertEl);
+
+            const confirmEl = document.getElementById('genericConfirmModal');
+            if (confirmEl) this.confirmModal = new bootstrap.Modal(confirmEl);
+
+            // Bind Yes Button for Confirm
+            const yesBtn = document.getElementById('genericConfirmYesBtn');
+            if (yesBtn) {
+                yesBtn.addEventListener('click', () => {
+                    if (this.onConfirm && typeof this.onConfirm === 'function') {
+                        this.onConfirm();
+                    }
+                    if (this.confirmModal) this.confirmModal.hide();
+                });
+            }
+        },
+
+        alert(message, title = 'Notification', type = 'primary') {
+            const titleEl = document.getElementById('genericAlertTitle');
+            const msgEl = document.getElementById('genericAlertMessage');
+            const headerEl = document.getElementById('genericAlertHeader');
+
+            if (titleEl) titleEl.textContent = title;
+            if (msgEl) msgEl.textContent = message;
+
+            // Reset classes
+            if (headerEl) {
+                headerEl.className = `modal-header text-white bg-${type === 'error' ? 'danger' : (type === 'success' ? 'success' : 'primary')}`;
+            }
+
+            if (this.alertModal) this.alertModal.show();
+            else window.alert(message); // Fallback
+        },
+
+        confirm(message, callback, title = 'Confirm', type = 'danger') {
+            const titleEl = document.getElementById('genericConfirmTitle');
+            const msgEl = document.getElementById('genericConfirmMessage');
+            const headerEl = document.getElementById('genericConfirmHeader');
+            const yesBtn = document.getElementById('genericConfirmYesBtn');
+
+            if (titleEl) titleEl.textContent = title;
+            if (msgEl) msgEl.textContent = message;
+
+            // Theme
+            if (headerEl) {
+                headerEl.className = `modal-header text-white bg-${type}`;
+            }
+            if (yesBtn) {
+                yesBtn.className = `btn btn-${type}`;
+            }
+
+            this.onConfirm = callback;
+
+            if (this.confirmModal) this.confirmModal.show();
+            else if (window.confirm(message)) callback(); // Fallback
+        }
+    };
+
+    NotificationManager.init();
+    window.NotificationManager = NotificationManager;
 
 });

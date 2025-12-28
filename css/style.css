@@ -35,6 +35,62 @@
     --toggle-dark-icon: #fff;
 }
 
+@font-face {
+    font-family: 'WhisperingSignature';
+    src: url('../font/WhisperingSignature.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'BastligaOne';
+    src: url('../font/BastligaOne.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'AmsterdamHandwriting';
+    src: url('../font/AmsterdamHandwriting.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Palisade';
+    src: url('../font/Palisade.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Priestacy';
+    src: url('../font/Priestacy.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Signatie';
+    src: url('../font/Signatie.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Modernline';
+    src: url('../font/modernline.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
 body {
     font-family: 'Outfit', sans-serif;
     background: radial-gradient(circle at top left, #f8fafc, #f1f5f9);
@@ -257,11 +313,11 @@ body {
 .navbar {
     background: #fff !important;
     border-bottom: 1px solid var(--border-color);
-    padding: 0.75rem 0;
+    padding: 0.35rem 0;
 }
 
 .navbar-brand {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
 }
 
 /* Progress / Badges */
@@ -1294,4 +1350,550 @@ body.darkmode label {
 /* Ensure proper contrast on all elements */
 body.darkmode * {
     border-color: #3e4157;
+}
+
+/* -------------------------------------------------------------
+   Button Slide Animation Styles (Added Custom Request)
+------------------------------------------------------------- */
+.btn-slide,
+.btn-slide2 {
+    position: relative;
+    display: inline-block;
+    height: 50px;
+    width: 100%;
+    /* Changed from 200px to 100% for responsiveness */
+    line-height: 50px;
+    padding: 0;
+    border-radius: 50px;
+    background: #fdfdfd;
+    border: 2px solid #0099cc;
+    margin: 5px 0;
+    /* Adjusted margin */
+    transition: .5s;
+    text-decoration: none;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.btn-slide:hover {
+    background-color: #0099cc;
+}
+
+.btn-slide span.circle {
+    display: block;
+    background-color: #0099cc;
+    color: #fff;
+    position: absolute;
+    float: left;
+    margin: 3px;
+    /* Slightly adjusted for border */
+    line-height: 40px;
+    height: 40px;
+    width: 40px;
+    top: 0;
+    left: 0;
+    transition: .5s;
+    border-radius: 50%;
+    text-align: center;
+    z-index: 2;
+}
+
+.btn-slide:hover span.circle {
+    left: 100%;
+    margin-left: -45px;
+    background-color: #fdfdfd;
+    color: #0099cc;
+}
+
+.btn-slide span.title,
+.btn-slide span.title-hover {
+    position: absolute;
+    left: 0;
+    right: 0;
+    text-align: center;
+    margin: 0 auto;
+    font-size: 16px;
+    font-weight: bold;
+    color: #0099cc;
+    transition: .5s;
+    z-index: 1;
+}
+
+.btn-slide span.title-hover {
+    opacity: 0;
+    color: #fff;
+}
+
+.btn-slide:hover span.title {
+    opacity: 0;
+}
+
+.btn-slide:hover span.title-hover {
+    opacity: 1;
+}
+
+/* --- Variants --- */
+
+/* Base overrides for easier color management */
+.btn-slide {
+    border-color: var(--primary);
+}
+
+.btn-slide:hover {
+    background-color: var(--primary);
+}
+
+.btn-slide span.circle {
+    background-color: var(--primary);
+}
+
+.btn-slide:hover span.circle {
+    color: var(--primary);
+}
+
+.btn-slide span.title {
+    color: var(--primary);
+}
+
+/* Tax Invoice (Primary Blue) */
+/* Already covered by defaults mapped to --primary, but specific class for clarity if needed */
+.btn-slide.primary {
+    border-color: #2563eb;
+}
+
+.btn-slide.primary:hover {
+    background-color: #2563eb;
+}
+
+.btn-slide.primary span.circle {
+    background-color: #2563eb;
+}
+
+.btn-slide.primary:hover span.circle {
+    color: #2563eb;
+}
+
+.btn-slide.primary span.title {
+    color: #2563eb;
+}
+
+
+/* Simple Invoice (Success Green) */
+.btn-slide.success {
+    border-color: #10b981;
+}
+
+.btn-slide.success:hover {
+    background-color: #10b981;
+}
+
+.btn-slide.success span.circle {
+    background-color: #10b981;
+}
+
+.btn-slide.success:hover span.circle {
+    color: #10b981;
+}
+
+.btn-slide.success span.title {
+    color: #10b981;
+}
+
+/* Quote (Info Cyan) */
+.btn-slide.info {
+    border-color: #0ea5e9;
+}
+
+.btn-slide.info:hover {
+    background-color: #0ea5e9;
+}
+
+.btn-slide.info span.circle {
+    background-color: #0ea5e9;
+}
+
+.btn-slide.info:hover span.circle {
+    color: #0ea5e9;
+}
+
+.btn-slide.info span.title {
+    color: #0ea5e9;
+}
+
+/* Challan (Warning Orange/Yellow) */
+.btn-slide.warning {
+    border-color: #f59e0b;
+}
+
+.btn-slide.warning:hover {
+    background-color: #f59e0b;
+}
+
+.btn-slide.warning span.circle {
+    background-color: #f59e0b;
+}
+
+.btn-slide.warning:hover span.circle {
+    color: #f59e0b;
+}
+
+.btn-slide.warning span.title {
+    color: #f59e0b;
+}
+
+/* -------------------------------------------------------------
+   SevMini Data Button Animation (User Request)
+------------------------------------------------------------- */
+/* From Uiverse.io by Juanes200122 */
+.container_SevMini {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    cursor: pointer;
+    /* Added for clickable feel */
+    transform: scale(0.5);
+    /* Scale down for navbar context */
+    transform-origin: center;
+}
+
+.Ghost {
+    transform: translate(0px, -25px);
+    z-index: -1;
+    animation: opacidad 4s infinite ease-in-out;
+}
+
+@keyframes opacidad {
+    0% {
+        opacity: 1;
+        scale: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+        scale: 0.9;
+    }
+
+    100% {
+        opacity: 1;
+        scale: 1;
+    }
+}
+
+@keyframes estroboscopico {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
+
+    51% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes rebote {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes estroboscopico1 {
+
+    0%,
+    50%,
+    100% {
+        fill: rgb(255, 95, 74);
+    }
+
+    25%,
+    75% {
+        fill: rgb(16, 53, 115);
+    }
+}
+
+@keyframes estroboscopico2 {
+
+    0%,
+    50%,
+    100% {
+        fill: #17e300;
+    }
+
+    25%,
+    75% {
+        fill: #17e300b4;
+    }
+}
+
+.SevMini {
+    animation: rebote 4s infinite ease-in-out;
+}
+
+#strobe_led1 {
+    animation: estroboscopico 0.5s infinite;
+}
+
+#strobe_color1 {
+    animation: estroboscopico2 0.8s infinite;
+}
+
+#strobe_color3 {
+    animation: estroboscopico1 0.8s infinite;
+    animation-delay: 3s;
+}
+
+/* -------------------------------------------------------------
+   Animated Save Button with Cloud Icon (User Request)
+/* Save Button Animated */
+.btn-save-animated {
+    font-family: inherit;
+    font-size: 16px;
+    background: #198754;
+    color: white;
+    fill: white;
+    padding: 0.6em 1em;
+    padding-left: 0.9em;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    border: none;
+    border-radius: 15px;
+    font-weight: 600;
+    transition: all 0.3s ease-in-out;
+}
+
+.btn-save-animated span {
+    display: block;
+    margin-left: 0.3em;
+    transition: all 0.3s ease-in-out;
+}
+
+.btn-save-animated svg {
+    display: block;
+    transform-origin: center center;
+    transition: transform 0.3s ease-in-out;
+    width: 24px;
+    height: 24px;
+}
+
+.btn-save-animated:hover {
+    background: #146c43;
+}
+
+
+.btn-save-animated:hover .svg-wrapper {
+    transform: scale(1.25);
+    transition: 0.5s linear;
+}
+
+.btn-save-animated:hover svg {
+    transform: translateX(1.2em) scale(1.1);
+    fill: #fff;
+}
+
+.btn-save-animated:hover span {
+    opacity: 0;
+    transition: 0.5s linear;
+}
+
+.btn-save-animated:active {
+    transform: scale(0.95);
+}
+
+/* Dark mode compatibility */
+body.darkmode .btn-save-animated {
+    background: #10b981;
+    color: white;
+}
+
+body.darkmode .btn-save-animated:hover {
+    background: #059669;
+}
+
+body.darkmode .btn-save-animated svg {
+    fill: rgba(255, 255, 255, 0.8);
+}
+
+body.darkmode .btn-save-animated:hover svg {
+    fill: #fff;
+}
+
+/* History Button Animated */
+.btn-history-animated {
+    font-family: inherit;
+    font-size: 16px;
+    background: #6c757d;
+    color: white;
+    fill: rgb(220, 220, 220);
+    padding: 0.6em 1em;
+    padding-left: 0.9em;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    border: none;
+    border-radius: 15px;
+    font-weight: 600;
+    transition: all 0.3s ease-in-out;
+}
+
+.btn-history-animated span {
+    display: block;
+    margin-left: 0.3em;
+    transition: all 0.3s ease-in-out;
+}
+
+.btn-history-animated svg {
+    display: block;
+    transform-origin: center center;
+    transition: transform 0.3s ease-in-out;
+    width: 24px;
+    height: 24px;
+}
+
+.btn-history-animated:hover {
+    background: #545b62;
+}
+
+.btn-history-animated:hover .svg-wrapper {
+    transform: scale(1.25);
+    transition: 0.5s linear;
+}
+
+.btn-history-animated:hover svg {
+    transform: translateX(1.2em) scale(1.1);
+    fill: #fff;
+}
+
+.btn-history-animated:hover span {
+    opacity: 0;
+    transition: 0.5s linear;
+}
+
+.btn-history-animated:active {
+    transform: scale(0.95);
+}
+
+/* History - Dark Mode */
+body.darkmode .btn-history-animated {
+    background: #4b5563;
+    color: white;
+}
+
+body.darkmode .btn-history-animated:hover {
+    background: #374151;
+}
+
+body.darkmode .btn-history-animated svg {
+    fill: rgba(255, 255, 255, 0.8);
+}
+
+body.darkmode .btn-history-animated:hover svg {
+    fill: #fff;
+}
+
+/* Reset Button Animated */
+.btn-reset-animated {
+    font-family: inherit;
+    font-size: 16px;
+    background: #dc3545;
+    color: white;
+    fill: rgb(255, 200, 200);
+    padding: 0.6em 1em;
+    padding-left: 0.9em;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    border: none;
+    border-radius: 15px;
+    font-weight: 600;
+    transition: all 0.3s ease-in-out;
+}
+
+.btn-reset-animated span {
+    display: block;
+    margin-left: 0.3em;
+    transition: all 0.3s ease-in-out;
+}
+
+.btn-reset-animated svg {
+    display: block;
+    transform-origin: center center;
+    transition: transform 0.3s ease-in-out;
+    width: 24px;
+    height: 24px;
+}
+
+.btn-reset-animated:hover {
+    background: #bb2d3b;
+}
+
+.btn-reset-animated:hover .svg-wrapper {
+    transform: scale(1.25);
+    transition: 0.5s linear;
+}
+
+.btn-reset-animated:hover svg {
+    transform: translateX(1.2em) scale(1.1);
+    fill: #fff;
+}
+
+.btn-reset-animated:hover span {
+    opacity: 0;
+    transition: 0.5s linear;
+}
+
+.btn-reset-animated:active {
+    transform: scale(0.95);
+}
+
+/* Reset - Dark Mode */
+body.darkmode .btn-reset-animated {
+    background: #ef4444;
+    color: white;
+}
+
+body.darkmode .btn-reset-animated:hover {
+    background: #dc2626;
+}
+
+body.darkmode .btn-reset-animated svg {
+    fill: rgba(255, 255, 255, 0.8);
+}
+
+
+/* -------------------------------------------------------------
+   Remove Input Spinners (User Request)
+------------------------------------------------------------- */
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+/* -------------------------------------------------------------
+   Modal Stacking Fix (Generic Modals on Top)
+------------------------------------------------------------- */
+#genericAlertModal,
+#genericConfirmModal {
+    z-index: 10600 !important;
+    /* Ensure these are above standard Bootstrap modals */
 }

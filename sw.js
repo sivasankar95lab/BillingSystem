@@ -1,4 +1,4 @@
-const CACHE_NAME = 'invoice-gen-v3';
+const CACHE_NAME = 'invoice-gen-v6';
 const ASSETS = [
     './',
     './index.html',
@@ -11,6 +11,14 @@ const ASSETS = [
     './img/512x512.png',
     './img/750x337.png',
     './robots.txt',
+    // Local Fonts for Offline Support
+    './font/AmsterdamHandwriting.ttf',
+    './font/BastligaOne.ttf',
+    './font/Palisade.otf',
+    './font/Priestacy.otf',
+    './font/Signatie.otf',
+    './font/WhisperingSignature.ttf',
+    './font/modernline.otf',
     // External Resources
     'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
@@ -46,8 +54,24 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch: Serve from cache, fallback to network
+// Fetch: Serve from cache, fallback to network, with runtime caching for fonts
 self.addEventListener('fetch', (event) => {
+    // Google Fonts Runtime Caching
+    if (event.request.url.includes('fonts.googleapis.com') || event.request.url.includes('fonts.gstatic.com')) {
+        event.respondWith(
+            caches.open(CACHE_NAME).then((cache) => {
+                return cache.match(event.request).then((response) => {
+                    return response || fetch(event.request).then((networkResponse) => {
+                        cache.put(event.request, networkResponse.clone());
+                        return networkResponse;
+                    });
+                });
+            })
+        );
+        return;
+    }
+
+    // Default Strategy
     event.respondWith(
         caches.match(event.request, { ignoreSearch: true }).then((response) => {
             return response || fetch(event.request);

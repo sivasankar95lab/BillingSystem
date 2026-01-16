@@ -348,6 +348,32 @@ create policy "Allow generic access" on user_data for all using (true) with chec
         </div>
     </div>
 
+    <!-- Download Options Modal -->
+    <div class="modal fade" id="downloadOptionsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-file-download me-2"></i>Download Options</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">You have unsaved changes. How would you like to proceed?</p>
+                </div>
+                <div class="modal-footer flex-column align-items-stretch">
+                    <button type="button" class="btn btn-success" id="downloadSaveBtn">
+                        <i class="fas fa-save me-2"></i>Save & Download
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="downloadOnlyBtn">
+                        <i class="fas fa-download me-2"></i>Download Only (Don't Save)
+                    </button>
+                    <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="container py-4">
         <form id="invoiceForm">
             <div class="row g-4">
@@ -452,7 +478,7 @@ create policy "Allow generic access" on user_data for all using (true) with chec
                                     <div class="mb-2">
                                         <label class="form-label small text-muted">Address</label>
                                         <textarea class="form-control" id="companyAddress" rows="2"
-                                            placeholder="Full Address">No.1, Old Mahabalipuram Road, Kandanchavadi, Chennai 600096.</textarea>
+                                            placeholder="Full Address"></textarea>
                                     </div>
 
                                     <hr class="my-3">
@@ -1055,8 +1081,8 @@ create policy "Allow generic access" on user_data for all using (true) with chec
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-    <script src="js/pdf-builder.js?v=2" defer></script>
-    <script src="js/app.js?v=2" defer></script>
+    <script src="js/pdf-builder.js?v=3" defer></script>
+    <script src="js/app.js?v=3" defer></script>
 
     <script>
         // Register Service Worker for PWA (Only if on HTTPS or Localhost)

@@ -595,20 +595,71 @@ document.addEventListener('DOMContentLoaded', () => {
         calculateTotals();
     }
 
+    // Download Handler with Save Prompt
+    let pendingDownloadAction = null;
+    const downloadModal = new bootstrap.Modal(document.getElementById('downloadOptionsModal'));
+
+    document.getElementById('downloadSaveBtn').addEventListener('click', () => {
+        if (pendingDownloadAction) {
+            InvoiceManager.saveCurrent(); // Save first
+            pendingDownloadAction(); // Then download
+            downloadModal.hide();
+            pendingDownloadAction = null;
+        }
+    });
+
+    document.getElementById('downloadOnlyBtn').addEventListener('click', () => {
+        if (pendingDownloadAction) {
+            pendingDownloadAction(); // Just download
+            downloadModal.hide();
+            pendingDownloadAction = null;
+        }
+    });
+
+    function handleDownload(action) {
+        // Check if current data is different from saved data? 
+        // For simplicity, just check if we have any items or details.
+        // Or check if exact JSON matches last history entry?
+        // Let's implement a "Dirty" check by comparing current gatherData with top of history.
+
+        const currentData = gatherData();
+        // Remove volatile fields if any (dates might differ by seconds?)
+        // Actually gatherData has date string from input, so it's stable.
+
+        let isDifferent = true;
+        if (InvoiceManager.history.length > 0) {
+            const lastSaved = InvoiceManager.history[0];
+
+            // We need to compare relevant fields.
+            // Simplified comparison:
+            const currentStr = JSON.stringify({ d: currentData.details, i: currentData.items });
+            const savedStr = JSON.stringify({ d: lastSaved.details, i: lastSaved.items });
+
+            if (currentStr === savedStr) isDifferent = false;
+        }
+
+        if (isDifferent) {
+            pendingDownloadAction = action;
+            downloadModal.show();
+        } else {
+            action();
+        }
+    }
+
     document.getElementById('btnTaxInvoice').addEventListener('click', () => {
-        generateTaxInvoice(gatherData());
+        handleDownload(() => generateTaxInvoice(gatherData()));
     });
 
     document.getElementById('btnSimpleInvoice').addEventListener('click', () => {
-        generateSimpleInvoice(gatherData());
+        handleDownload(() => generateSimpleInvoice(gatherData()));
     });
 
     document.getElementById('btnChallan').addEventListener('click', () => {
-        generateDeliveryChallan(gatherData());
+        handleDownload(() => generateDeliveryChallan(gatherData()));
     });
 
     document.getElementById('btnQuote').addEventListener('click', () => {
-        generateQuote(gatherData());
+        handleDownload(() => generateQuote(gatherData()));
     });
 
     function gatherData() {
@@ -1445,7 +1496,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const snapshot = {
                 id: Date.now(),
                 savedAt: new Date().toLocaleString(),
-                details: { ...data.details, logo: null, signature: null }, // Don't save base64 images to history to save space
+                details: { ...data.details }, // Save images (Base64) to history to fix CORS issues on reload
                 items: JSON.parse(JSON.stringify(state.items)),
                 totals: data.totals,
                 settings: JSON.parse(JSON.stringify(data.details)) // Use gathered details as settings
@@ -1550,16 +1601,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.getElementById('companyName').value = s.companyName;
             document.getElementById('companyAddress').value = s.companyAddress;
-            document.getElementById('companyGst').value = s.companyGstin;
+            document.getElementById('companyGst').value = s.companyGst;
             document.getElementById('companyPhone').value = s.companyPhone;
             document.getElementById('companyEmail').value = s.companyEmail || '';
 
-            document.getElementById('logoUrl').value = s.logoUrl;
-            document.getElementById('signatureUrl').value = s.signatureUrl;
+            document.getElementById('companyEmail').value = s.companyEmail || '';
+
+            // Restore Images - Fix CORS by using stored Base64 if available
+            if (s.logo && s.logo.startsWith('data:image')) {
+                state.logoImage = s.logo;
+                document.getElementById('logoUrl').value = s.logoUrl || ''; // Keep URL if it was there
+                document.getElementById('logoPreview').src = s.logo;
+                document.getElementById('logoPreview').style.display = 'block';
+                document.getElementById('logoPlaceholder').style.display = 'none';
+            } else {
+                document.getElementById('logoUrl').value = s.logoUrl;
+                document.getElementById('logoUrl').dispatchEvent(new Event('input'));
+            }
+
+            if (s.signature && s.signature.startsWith('data:image')) {
+                state.signatureImage = s.signature;
+                document.getElementById('signatureUrl').value = s.signatureUrl || '';
+                if (s.signatureOption === 'draw') {
+                    const canvas = document.getElementById('signatureCanvas');
+                    const ctx = canvas.getContext('2d');
+                    const img = new Image();
+                    img.onload = () => {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0);
+                    };
+                    img.src = s.signature;
+                } else {
+                    document.getElementById('signatureUrlPreview').src = s.signature;
+                    document.getElementById('signatureUrlPreview').style.display = 'block';
+                    document.getElementById('signatureUrlPlaceholder').style.display = 'none';
+                }
+            } else {
+                document.getElementById('signatureUrl').value = s.signatureUrl;
+                document.getElementById('signatureUrl').dispatchEvent(new Event('input'));
+            }
 
             document.getElementById('clientName').value = s.clientName;
             document.getElementById('clientAddress').value = s.clientAddress;
-            document.getElementById('clientGst').value = s.clientGstin;
+            document.getElementById('clientGst').value = s.clientGst;
             document.getElementById('clientPhone').value = s.clientPhone;
             document.getElementById('clientEmail').value = s.clientEmail || '';
             document.getElementById('clientNotes').value = s.clientNotes || '';
@@ -1583,9 +1667,11 @@ document.addEventListener('DOMContentLoaded', () => {
             state.items = JSON.parse(JSON.stringify(record.items)); // Deep copy
             state.taxType = s.clientState === 'Same State' ? 'Same State' : 'Inter State';
 
+            state.taxType = s.clientState === 'Same State' ? 'Same State' : 'Inter State';
+
             // Trigger Events
-            document.getElementById('logoUrl').dispatchEvent(new Event('input'));
-            document.getElementById('signatureUrl').dispatchEvent(new Event('input'));
+            // document.getElementById('logoUrl').dispatchEvent(new Event('input')); // Removed to prevent override by URL fetch
+            // document.getElementById('signatureUrl').dispatchEvent(new Event('input')); // Removed
             document.getElementById('clientState').dispatchEvent(new Event('change'));
 
             // Render

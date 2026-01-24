@@ -274,13 +274,17 @@ create policy "Allow generic access" on user_data for all using (true) with chec
                             backup.
                         </div>
                         <div id="databaseContent" class="p-3 rounded border bg-light">
-                            <pre class="mb-0"><code id="databaseJson">Loading...</code></pre>
+                            <textarea id="databaseJson" class="form-control font-monospace small" rows="15"
+                                style="white-space: pre; overflow-x: auto; font-size: 12px;"></textarea>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" onclick="DataManager.exportData()">
                         <i class="fas fa-download me-1"></i>Export This Data
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="DataManager.saveDatabase()">
+                        <i class="fas fa-save me-1"></i>Save & Apply
                     </button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
@@ -433,8 +437,8 @@ create policy "Allow generic access" on user_data for all using (true) with chec
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-medium">Invoice Number</label>
-                                    <input type="text" class="form-control" id="invoiceNumber" placeholder="INV-001"
-                                        value="INV-001" required>
+                                    <input type="text" class="form-control" id="invoiceNumber" placeholder="INV-24-001"
+                                        required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-medium">Date</label>
@@ -1021,10 +1025,21 @@ create policy "Allow generic access" on user_data for all using (true) with chec
                             <table class="table table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Date Saved</th>
-                                        <th>Invoice #</th>
-                                        <th>Client</th>
-                                        <th>Amount</th>
+                                        <th onclick="InvoiceManager.sortHistory('savedAt')" style="cursor: pointer;">
+                                            Date Saved <i id="sort-icon-date" class="fas fa-sort text-muted ms-1"></i>
+                                        </th>
+                                        <th onclick="InvoiceManager.sortHistory('details.invoiceNumber')"
+                                            style="cursor: pointer;">
+                                            Invoice # <i id="sort-icon-inv" class="fas fa-sort text-muted ms-1"></i>
+                                        </th>
+                                        <th onclick="InvoiceManager.sortHistory('details.clientName')"
+                                            style="cursor: pointer;">
+                                            Client <i id="sort-icon-client" class="fas fa-sort text-muted ms-1"></i>
+                                        </th>
+                                        <th onclick="InvoiceManager.sortHistory('totals.total')"
+                                            style="cursor: pointer;">
+                                            Amount <i id="sort-icon-amount" class="fas fa-sort text-muted ms-1"></i>
+                                        </th>
                                         <th style="width: 150px;">Actions</th>
                                     </tr>
                                 </thead>
@@ -1081,8 +1096,8 @@ create policy "Allow generic access" on user_data for all using (true) with chec
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-    <script src="js/pdf-builder.js?v=3" defer></script>
-    <script src="js/app.js?v=3" defer></script>
+    <script src="js/pdf-builder.js?v=4" defer></script>
+    <script src="js/app.js?v=4" defer></script>
 
     <script>
         // Register Service Worker for PWA (Only if on HTTPS or Localhost)

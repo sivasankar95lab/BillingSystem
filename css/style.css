@@ -415,6 +415,14 @@ body {
     flex-direction: column;
     max-height: 90vh;
     /* Ensure modal doesn't exceed viewport */
+    resize: both;
+    overflow: auto;
+    /* Required for resize handle */
+}
+
+/* Allow dialog to expand with content resize */
+.modal-dialog {
+    max-width: 95vw !important;
 }
 
 .modal-header {
@@ -1887,6 +1895,7 @@ input::-webkit-inner-spin-button {
 /* Firefox */
 input[type=number] {
     -moz-appearance: textfield;
+    appearance: textfield;
 }
 
 /* -------------------------------------------------------------
